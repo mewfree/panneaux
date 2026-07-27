@@ -10,7 +10,7 @@ export function FilterChip({ label, active, onClick }: Props) {
       type="button"
       onClick={onClick}
       className={[
-        "rounded-full border px-3 py-1 text-xs font-medium transition",
+        "cursor-pointer rounded-full border px-3 py-1 text-xs font-medium transition",
         active
           ? "border-slate-900 bg-slate-900 text-white"
           : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",

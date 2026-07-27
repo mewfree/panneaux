@@ -5,6 +5,7 @@ import { PanneauGrid } from "../components/PanneauGrid";
 import { SearchBox } from "../components/SearchBox";
 import { catalog, countForCategory, topCategories } from "../lib/catalog";
 import { searchPanneaux } from "../lib/search";
+import { newShuffleSeed, shuffle } from "../lib/shuffle";
 
 const PAGE_SIZE = 48;
 const PREFIXES = ["P-", "D-", "T-", "I-", "Rte-", "Auto-"];
@@ -14,30 +15,33 @@ export function HomePage() {
   const q = params.get("q") ?? "";
   const catFilter = params.get("cat") ?? "";
   const prefix = params.get("prefix") ?? "";
+  const randomOn = params.get("random") === "1";
+  const seedParam = params.get("seed");
+  const seed = seedParam ? Number(seedParam) : null;
   const [localQ, setLocalQ] = useState(q);
   const [visible, setVisible] = useState(PAGE_SIZE);
 
-  // Keep local input in sync when navigating with browser back/forward
   useEffect(() => {
     setLocalQ(q);
   }, [q]);
 
   useEffect(() => {
     setVisible(PAGE_SIZE);
-  }, [q, catFilter, prefix]);
+  }, [q, catFilter, prefix, randomOn, seed]);
 
-  const results = useMemo(
-    () =>
-      searchPanneaux(
-        q,
-        {
-          cats: catFilter ? [catFilter] : undefined,
-          codePrefix: prefix || undefined,
-        },
-        5000,
-      ),
-    [q, catFilter, prefix],
-  );
+  const results = useMemo(() => {
+    const base = searchPanneaux(
+      q,
+      {
+        cats: catFilter ? [catFilter] : undefined,
+        codePrefix: prefix || undefined,
+      },
+      5000,
+    );
+    if (!randomOn) return base;
+    // Stable shuffle when seed is set; otherwise one-shot random (no seed yet)
+    return shuffle(base, seed != null && Number.isFinite(seed) ? seed : undefined);
+  }, [q, catFilter, prefix, randomOn, seed]);
 
   const shown = results.slice(0, visible);
   const hasMore = visible < results.length;
@@ -51,7 +55,19 @@ export function HomePage() {
     setParams(p, { replace: true });
   }
 
-  const filtering = Boolean(q.trim() || catFilter || prefix);
+  function enableRandom() {
+    update({ random: "1", seed: String(newShuffleSeed()) });
+  }
+
+  function reshuffle() {
+    update({ random: "1", seed: String(newShuffleSeed()) });
+  }
+
+  function disableRandom() {
+    update({ random: null, seed: null });
+  }
+
+  const filtering = Boolean(q.trim() || catFilter || prefix || randomOn);
 
   return (
     <div className="space-y-6">
@@ -103,10 +119,25 @@ export function HomePage() {
               label={p}
             />
           ))}
+          <span className="mx-1 hidden h-4 w-px bg-slate-200 sm:inline" aria-hidden />
+          <FilterChip
+            active={randomOn}
+            onClick={() => (randomOn ? disableRandom() : enableRandom())}
+            label="Aléatoire"
+          />
+          {randomOn && (
+            <button
+              type="button"
+              onClick={reshuffle}
+              className="cursor-pointer text-xs font-medium text-brand-600 hover:underline"
+            >
+              Mélanger à nouveau
+            </button>
+          )}
           {filtering && (
             <button
               type="button"
-              className="ml-1 text-xs font-medium text-brand-600 hover:underline"
+              className="ml-1 cursor-pointer text-xs font-medium text-brand-600 hover:underline"
               onClick={() => {
                 setLocalQ("");
                 setParams({}, { replace: true });
@@ -122,6 +153,9 @@ export function HomePage() {
         <p className="text-sm text-slate-500">
           {results.length.toLocaleString("fr-CA")} panneau
           {results.length === 1 ? "" : "x"}
+          {randomOn ? (
+            <span className="text-slate-400"> · ordre aléatoire</span>
+          ) : null}
           {q.trim() ? (
             <>
               {" "}
