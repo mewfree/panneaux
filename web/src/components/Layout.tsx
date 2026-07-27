@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { catalog } from "../lib/catalog";
+import { Logo } from "./Logo";
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   [
@@ -15,12 +16,7 @@ export function Layout() {
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Link to="/" className="flex items-center gap-2.5 font-semibold tracking-tight">
-            <span
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-yellow-400"
-              aria-hidden
-            >
-              ▲
-            </span>
+            <Logo className="h-8 w-8 shrink-0" />
             <span>
               Panneaux <span className="text-slate-500">QC</span>
             </span>
