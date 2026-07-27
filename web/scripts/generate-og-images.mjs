@@ -63,28 +63,45 @@ function safeAnnotate(text, max = 42) {
   return t.replace(/\\/g, "\\\\").replace(/%/g, "%%");
 }
 
+/** Escape special chars for ImageMagick -annotate (no length truncate). */
+function escapeAnnotate(text) {
+  return String(text || "")
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "%%");
+}
+
 function wrapLines(text, maxLen = 36, maxLines = 3) {
-  const words = String(text || "")
+  const full = String(text || "")
     .replace(/\s+/g, " ")
-    .trim()
-    .split(" ");
+    .trim();
+  const words = full.split(" ").filter(Boolean);
   const lines = [];
   let cur = "";
-  for (const w of words) {
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
     const next = cur ? `${cur} ${w}` : w;
     if (next.length > maxLen && cur) {
       lines.push(cur);
       cur = w;
-      if (lines.length >= maxLines) break;
+      if (lines.length >= maxLines) {
+        // Remaining words (including w) do not fit — ellipsis on last line
+        const last = lines.length - 1;
+        let t = lines[last].trimEnd();
+        if (t.length > maxLen - 1) t = t.slice(0, maxLen - 1).trimEnd();
+        lines[last] = `${t}…`;
+        cur = "";
+        break;
+      }
     } else {
       cur = next;
     }
   }
-  if (lines.length < maxLines && cur) lines.push(cur);
-  if (lines.length === maxLines && words.join(" ").length > lines.join(" ").length) {
-    lines[maxLines - 1] = safeAnnotate(lines[maxLines - 1], maxLen);
+  if (cur && lines.length < maxLines) lines.push(cur);
+  // Single overlong word
+  if (lines.length === 0 && full) {
+    lines.push(safeAnnotate(full, maxLen));
   }
-  return lines.map((l) => safeAnnotate(l, maxLen + 2));
+  return lines.map((l) => escapeAnnotate(l));
 }
 
 function generateOne(cid, code, nameFr) {
@@ -96,8 +113,11 @@ function generateOne(cid, code, nameFr) {
     return { ok: true, skipped: true };
   }
 
-  const codeText = safeAnnotate(code, 28);
-  const nameLines = wrapLines(nameFr, 34, 3);
+  // Layout: brand → title (name) large → code (id) below → footer
+  // Text column ~x=620; ~520px wide — wrap tightly for large type.
+  const titleLines = wrapLines(nameFr, 22, 4);
+  const codeText = safeAnnotate(code, 32);
+  const textX = 620;
 
   // Build magick args: background + panneau + texts
   const args = [
@@ -107,56 +127,64 @@ function generateOne(cid, code, nameFr) {
     "(",
     src,
     "-resize",
-    "420x420>",
+    "500x500>",
     "-background",
     "none",
     "-gravity",
     "center",
     "-extent",
-    "500x500",
+    "560x560",
     ")",
     "-gravity",
     "west",
     "-geometry",
-    "+50+0",
+    "+32+0",
     "-composite",
+    // Brand
     "-fill",
     "#64748b",
     "-font",
     FONT_REG,
     "-pointsize",
-    "22",
+    "26",
     "-gravity",
     "northwest",
     "-annotate",
-    "+580+140",
+    `+${textX}+100`,
     "Panneaux QC",
-    "-fill",
-    "#f8fafc",
-    "-font",
-    FONT_BOLD,
-    "-pointsize",
-    "48",
-    "-annotate",
-    "+580+200",
-    codeText,
   ];
 
-  let y = 270;
-  for (const line of nameLines) {
+  // Title (name) — primary, large bold
+  let y = 155;
+  const titleLineH = 50;
+  for (const line of titleLines) {
     args.push(
       "-fill",
-      "#94a3b8",
+      "#f8fafc",
       "-font",
-      FONT_REG,
+      FONT_BOLD,
       "-pointsize",
-      "28",
+      "42",
       "-annotate",
-      `+580+${y}`,
+      `+${textX}+${y}`,
       line,
     );
-    y += 40;
+    y += titleLineH;
   }
+
+  // Code / id — secondary, under title
+  y += 10;
+  args.push(
+    "-fill",
+    "#94a3b8",
+    "-font",
+    FONT_REG,
+    "-pointsize",
+    "30",
+    "-annotate",
+    `+${textX}+${y}`,
+    codeText,
+  );
 
   args.push(
     "-fill",
@@ -164,9 +192,9 @@ function generateOne(cid, code, nameFr) {
     "-font",
     FONT_REG,
     "-pointsize",
-    "20",
+    "22",
     "-annotate",
-    "+580+540",
+    `+${textX}+540`,
     "Signalisation routiere du Quebec",
     dest,
   );
