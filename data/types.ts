@@ -51,12 +51,27 @@ export type CatalogFile = {
   panneaux: Panneau[];
 };
 
+export const RSR_HOME = "https://www.rsr.transports.gouv.qc.ca/";
+
 export function devisUrl(cid: number): string {
   return `https://www.rsr.transports.gouv.qc.ca/Utilitaires/Devis.aspx?cid=${cid}`;
 }
 
 export function officialImageUrl(cid: number): string {
   return `https://www.rsr.transports.gouv.qc.ca/Gestionnaires/ObtenirImage.ashx?imgId=${cid}`;
+}
+
+/**
+ * Deep links to Details.aspx expire (« Session expirée ») without an ASP.NET
+ * session. Prefer the category list — it starts a fresh session in the browser.
+ */
+export function officialCategoryUrl(che: string, cat: string): string {
+  return `https://www.rsr.transports.gouv.qc.ca/Dispositifs/Panneaux.aspx?che=${encodeURIComponent(che)}&cat=${encodeURIComponent(cat)}`;
+}
+
+/** @deprecated Prefer officialCategoryUrl — Details.aspx needs a live RSR session. */
+export function officialDetailUrl(cid: number, che: string, cat: string): string {
+  return `https://www.rsr.transports.gouv.qc.ca/Dispositifs/Details.aspx?cid=${cid}&che=${encodeURIComponent(che)}&cat=${encodeURIComponent(cat)}`;
 }
 
 export function codeToSlug(code: string): string {

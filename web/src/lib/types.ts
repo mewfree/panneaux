@@ -9,5 +9,8 @@ export type {
 export {
   codeToSlug,
   devisUrl,
+  officialCategoryUrl,
+  officialDetailUrl,
   officialImageUrl,
+  RSR_HOME,
 } from "../../../data/types";

@@ -136,26 +136,18 @@ export function PanneauPage() {
             )}
           </dl>
 
-          <div className="flex flex-wrap gap-3">
-            <a
-              href={p.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
-            >
-              Voir sur le site officiel RSR
-            </a>
-            {p.hasDevis && (
+          {p.hasDevis && (
+            <div className="flex flex-wrap gap-3">
               <a
                 href={devisUrl(p.cid)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 hover:border-slate-300"
+                className="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
               >
                 Devis PDF
               </a>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </article>
