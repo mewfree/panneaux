@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "panneaux",
+  "compatibility_date": "2025-06-01",
+  "main": "worker/index.ts",
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "binding": "ASSETS"
+  },
+  "r2_buckets": [
+    {
+      "binding": "IMAGES",
+      "bucket_name": "panneaux-images"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "panneaux",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Répertoire moderne des panneaux de signalisation routière du Québec",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "pnpm --filter @panneaux/web dev",
+    "build": "pnpm --filter @panneaux/web build",
+    "preview": "pnpm --filter @panneaux/web preview",
+    "deploy": "pnpm --filter @panneaux/web deploy",
+    "deploy:only": "pnpm --filter @panneaux/web exec wrangler deploy",
+    "scrape": "pnpm --filter @panneaux/scraper scrape",
+    "scrape:sample": "pnpm --filter @panneaux/scraper scrape:sample",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

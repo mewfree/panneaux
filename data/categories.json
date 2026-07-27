@@ -1,0 +1,105 @@
+{
+  "scrapedAt": "2026-07-27T00:00:00.000Z",
+  "categories": [
+    {
+      "cat": "DANGR",
+      "che": "DANGR",
+      "slug": "danger",
+      "nameFr": "Danger",
+      "nameEn": "Warning",
+      "descriptionFr": "Panneaux indiquant un obstacle, un point dangereux ou précédant certains panneaux de prescription.",
+      "children": []
+    },
+    {
+      "cat": "INDCT",
+      "che": "INDCT",
+      "slug": "indication",
+      "nameFr": "Indication",
+      "nameEn": "Guide",
+      "descriptionFr": "Panneaux d'information, de destination, de repérage et d'équipements.",
+      "children": [
+        {
+          "cat": "DESTN",
+          "che": "INDCT-DESTN",
+          "slug": "destination",
+          "nameFr": "Destination",
+          "children": []
+        },
+        {
+          "cat": "EQUSP",
+          "che": "INDCT-EQUSP",
+          "slug": "equipements-specifiques",
+          "nameFr": "Équipements spécifiques",
+          "children": []
+        },
+        {
+          "cat": "EQUTO",
+          "che": "INDCT-EQUTO",
+          "slug": "equipements-touristiques",
+          "nameFr": "Équipements touristiques",
+          "children": [
+            { "cat": "ARRHI", "che": "INDCT-EQUTO-ARRHI", "slug": "site-patrimonial", "nameFr": "Site patrimonial", "children": [] },
+            { "cat": "ATTPR", "che": "INDCT-EQUTO-ATTPR", "slug": "attraits-prives", "nameFr": "Attraits privés", "children": [] },
+            { "cat": "ATTPU", "che": "INDCT-EQUTO-ATTPU", "slug": "attraits-publics", "nameFr": "Attraits publics", "children": [] },
+            { "cat": "INFTO", "che": "INDCT-EQUTO-INFTO", "slug": "information-touristique", "nameFr": "Information touristique", "children": [] },
+            { "cat": "ITCHR", "che": "INDCT-EQUTO-ITCHR", "slug": "itineraire-cyclable", "nameFr": "Itinéraire cyclable hors route", "children": [] },
+            { "cat": "PARRO", "che": "INDCT-EQUTO-PARRO", "slug": "parcs-routiers", "nameFr": "Parcs routiers", "children": [] },
+            { "cat": "PICTG", "che": "INDCT-EQUTO-PICTG", "slug": "pictogrammes", "nameFr": "Pictogrammes", "children": [] },
+            { "cat": "RESFA", "che": "INDCT-EQUTO-RESFA", "slug": "reserves-parcs-refuges", "nameFr": "Réserves, parcs et refuges fauniques", "children": [] },
+            { "cat": "ROUTO", "che": "INDCT-EQUTO-ROUTO", "slug": "route-touristique", "nameFr": "Route touristique", "children": [] },
+            { "cat": "SERVC", "che": "INDCT-EQUTO-SERVC", "slug": "services", "nameFr": "Services", "children": [] }
+          ]
+        },
+        {
+          "cat": "INFRM",
+          "che": "INDCT-INFRM",
+          "slug": "information",
+          "nameFr": "Information",
+          "children": []
+        },
+        {
+          "cat": "REPRG",
+          "che": "INDCT-REPRG",
+          "slug": "reperage",
+          "nameFr": "Repérage",
+          "children": [
+            { "cat": "DIVRS", "che": "INDCT-REPRG-DIVRS", "slug": "divers", "nameFr": "Divers", "children": [] },
+            { "cat": "ECUAU", "che": "INDCT-REPRG-ECUAU", "slug": "ecussons-autoroute", "nameFr": "Écussons d'autoroute", "children": [] },
+            { "cat": "ECURO", "che": "INDCT-REPRG-ECURO", "slug": "ecussons-route", "nameFr": "Écussons de route", "children": [] },
+            { "cat": "LIMTT", "che": "INDCT-REPRG-LIMTT", "slug": "limite-territoriale", "nameFr": "Limite territoriale", "children": [] },
+            { "cat": "NOMCP", "che": "INDCT-REPRG-NOMCP", "slug": "nom-chemin-pont", "nameFr": "Nom d'un chemin ou d'un pont", "children": [] },
+            { "cat": "REPGE", "che": "INDCT-REPRG-REPGE", "slug": "reperes-geographiques", "nameFr": "Repères géographiques", "children": [] },
+            { "cat": "REPKI", "che": "INDCT-REPRG-REPKI", "slug": "reperes-kilometriques", "nameFr": "Repères kilométriques", "children": [] }
+          ]
+        }
+      ]
+    },
+    {
+      "cat": "PANCX",
+      "che": "PANCX",
+      "slug": "panonceaux",
+      "nameFr": "Panonceaux",
+      "nameEn": "Plaques",
+      "descriptionFr": "Panneaux complémentaires précisant un panneau principal.",
+      "children": []
+    },
+    {
+      "cat": "PRESC",
+      "che": "PRESC",
+      "slug": "prescription",
+      "nameFr": "Prescription",
+      "nameEn": "Regulatory",
+      "descriptionFr": "Obligations et interdictions pour les usagers de la route.",
+      "children": []
+    },
+    {
+      "cat": "TRAVX",
+      "che": "TRAVX",
+      "slug": "travaux",
+      "nameFr": "Travaux",
+      "nameEn": "Temporary conditions",
+      "descriptionFr": "Signalisation temporaire de chantier et de travaux.",
+      "children": []
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+#+title: Scraper RSR
+#+language: fr
+
+Crawler Playwright pour le
+[[https://www.rsr.transports.gouv.qc.ca/Dispositifs/Panneaux.aspx][Répertoire des dispositifs de signalisation routière]].
+
+* Usage
+
+Depuis la racine du monorepo :
+
+#+begin_src bash
+pnpm install
+pnpm --filter @panneaux/scraper exec playwright install chromium
+
+# Échantillon (quelques catégories)
+pnpm scrape:sample
+
+# Si Cloudflare bloque (403) :
+pnpm --filter @panneaux/scraper scrape -- --sample --headed
+
+# Scrape complet
+pnpm scrape
+#+end_src
+
+** Options
+
+| Flag              | Description                    |
+|-------------------+--------------------------------|
+| ~--sample~        | Limite catégories + items      |
+| ~--headed~        | Navigateur visible (défis CF)  |
+| ~--skip-details~  | Liste seulement                |
+| ~--skip-images~   | Pas de téléchargement d’images |
+| ~--delay 750~     | Délai entre navigations (ms)   |
+
+* Sorties
+
+- ~data/panneaux.json~ — catalogue
+- ~data/scrape-report.json~ — métriques / erreurs
+- ~data/images/{cid}.png~ — images locales (gitignorées)
+- ~scraper/.cache/html/~ — HTML brut pour debug
+
+* Éthique
+
+- Rate-limit respectueux
+- User-Agent identifiable
+- Usage de *référence / recherche* uniquement (pas d’entraînement IA)
+- Toujours pointer vers le site officiel sur le frontend

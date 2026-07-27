@@ -1,0 +1,20 @@
+{
+  "name": "@panneaux/scraper",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "scrape": "tsx src/cli.ts",
+    "scrape:sample": "tsx src/cli.ts --sample",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cheerio": "^1.1.0",
+    "playwright": "^1.53.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.32",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}

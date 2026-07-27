@@ -1,0 +1,86 @@
+#+title: Panneaux QC
+#+language: fr
+
+Répertoire moderne et consultable des *panneaux de signalisation routière du Québec*, avec recherche instantanée et navigation visuelle.
+
+#+begin_quote
+*Non officiel.* Les données et images proviennent du
+[[https://www.rsr.transports.gouv.qc.ca/][Répertoire des dispositifs de signalisation routière (RSR)]]
+du ministère des Transports et de la Mobilité durable. Pour toute
+référence réglementaire, consultez le site officiel et le /Tome V –
+Signalisation routière/.
+#+end_quote
+
+Interface en *français (Canada)* ; support anglais (Canada) optionnel.
+
+* Stack
+
+| Couche      | Techno                                              |
+|-------------+-----------------------------------------------------|
+| Site        | Vite + React + TypeScript + Tailwind                |
+| Déploiement | Cloudflare Workers (~@cloudflare/vite-plugin~)      |
+| Images      | Cloudflare R2                                       |
+| Scraping    | Playwright (hors ligne / CI)                        |
+| Recherche   | MiniSearch (côté client)                            |
+
+* Démarrage
+
+#+begin_src bash
+pnpm install
+pnpm dev
+#+end_src
+
+Ouvre l’app locale (Vite). Les données d’exemple sont dans ~data/~.
+
+** Scripts
+
+| Commande            | Description                                              |
+|---------------------+----------------------------------------------------------|
+| ~pnpm dev~          | Serveur de dev du site                                   |
+| ~pnpm build~        | Build production                                         |
+| ~pnpm deploy~       | Build + déploie sur Cloudflare Workers                   |
+| ~pnpm deploy:only~  | Déploie seulement (après ~pnpm build~)                   |
+| ~pnpm scrape:sample~ | Petit scrape de démo (si le site source est accessible) |
+| ~pnpm scrape~       | Scrape complet des panneaux                              |
+
+* Déploiement Cloudflare Workers (CI)
+
+Monorepo pnpm : le Worker vit dans ~web/~. Ne pas lancer ~wrangler deploy~
+à la racine (erreur « workspace instead of targeting a specific project »).
+
+Réglages du build Cloudflare :
+
+| Setting         | Valeur                                                    |
+|-----------------+-----------------------------------------------------------|
+| Root directory  | ~/~ (racine du dépôt, pas ~web/~)                         |
+| Build command   | ~pnpm run build~                                          |
+| Deploy command  | ~pnpm run deploy:only~                                    |
+|                 | ou ~pnpm --filter @panneaux/web exec wrangler deploy~     |
+
+Localement :
+
+#+begin_src bash
+pnpm build
+pnpm deploy:only
+# ou d’un coup :
+pnpm deploy
+#+end_src
+
+* Structure
+
+#+begin_example
+data/          # Catalogue JSON (snapshot versionné)
+scraper/       # Crawler Playwright → JSON + images
+web/           # Application Vite / React / Workers
+#+end_example
+
+* Attribution
+
+- Source : [[https://www.rsr.transports.gouv.qc.ca/][rsr.transports.gouv.qc.ca]]
+- © Gouvernement du Québec (contenu d’origine)
+- Ce projet est un outil de consultation indépendant, non affilié au MTMD.
+
+* Licence
+
+Code source : voir dépôt. Les images et textes des panneaux demeurent la
+propriété de leurs ayants droit (Gouvernement du Québec).

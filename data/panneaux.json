@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "scrapedAt": "2026-07-27T00:00:00.000Z",
+  "source": "https://www.rsr.transports.gouv.qc.ca/Dispositifs/Panneaux.aspx",
+  "count": 12,
+  "panneaux": [
+    {
+      "cid": 12571,
+      "code": "D-230-6",
+      "nameFr": "Pente raide composée",
+      "descriptionFr": "Panneau indiquant une pente raide composée.",
+      "category": {
+        "che": "DANGR",
+        "cat": "DANGR",
+        "pathFr": ["Danger"]
+      },
+      "hasDevis": true,
+      "imageKey": "12571",
+      "sourceUrl": "https://www.rsr.transports.gouv.qc.ca/Dispositifs/Details.aspx?cid=12571&che=DANGR&cat=DANGR",
+      "scrapedAt": "2026-07-27T00:00:00.000Z"
+    },
+    {
+      "cid": 12678,
+      "code": "D-440-6",
+      "nameFr": "Chaussée désignée",
+      "descriptionFr": "Panneau indiquant une chaussée désignée.",
+      "category": {
+        "che": "DANGR",
+        "cat": "DANGR",
+        "pathFr": ["Danger"]
+      },
+      "hasDevis": true,
+      "imageKey": "12678",
+      "sourceUrl": "https://www.rsr.transports.gouv.qc.ca/Dispositifs/Details.aspx?cid=12678&che=DANGR&cat=DANGR",
+      "scrapedAt": "2026-07-27T00:00:00.000Z"
+    },
+    {
+      "cid": 24835,
+      "code": "P-130-29",
+      "nameFr": "Accès interdit aux véhicules récréatifs",
+      "descriptionFr": "Panneau indiquant l'interdiction d'accès aux véhicules récréatifs.",
+      "category": {
+        "che": "PRESC",
+        "cat": "PRESC",
+        "pathFr": ["Prescription"]
+      },
+      "hasDevis": true,
+      "imageKey": "24835",
+      "sourceUrl": "https://www.rsr.transports.gouv.qc.ca/Dispositifs/Details.aspx?cid=24835&che=PRESC&cat=PRESC",
+      "scrapedAt": "2026-07-27T00:00:00.000Z"
+    },
+    {
+      "cid": 24557,
+      "code": "P-250-1",
+      "nameFr": "Voie réservée",
+      "descriptionFr": "Panneau indiquant une voie réservée à certaines catégories de véhicules.",
+      "category": {
+        "che": "PRESC",
+        "cat": "PRESC",
+        "pathFr": ["Prescription"]
+      },
+      "hasDevis": true,
+      "imageKey": "24557",
+      "sourceUrl": "https://www.rsr.transports.gouv.qc.ca/Dispositifs/Details.aspx?cid=24557&che=PRESC&cat=PRESC",
+      "scrapedAt": "2026-07-27T00:00:00.000Z"
+    },
+    {
+      "cid": 24808,
+      "code": "P-70-3-A",
+      "nameFr": "Limite de vitesse",
+      "descriptionFr": "Panneau indiquant une limite de vitesse.",
+      "category": {
+        "che": "PRESC",
+        "cat": "PRESC",
+        "pathFr": ["Prescription"]
+      },
+      "hasDevis": true,
+      "imageKey": "24808",
+      "sourceUrl": "https://www.rsr.transports.gouv.qc.ca/Dispositifs/Details.aspx?cid=24808&che=PRESC&cat=PRESC",
+      "scrapedAt": "2026-07-27T00:00:00.000Z"
+    },
+    {
+      "cid": 13304,
+      "code": "P-110-6",
+      "nameFr": "Interdiction de tourner à gauche",
+      "descriptionFr": "Manœuvres obligatoires ou interdites à certaines intersections. Interdiction de tourner à gauche.",
+      "category": {
+        "che": "PRESC",
+        "cat": "PRESC",
+        "pathFr": ["Prescription"]
+      },
+      "hasDevis": true,
+      "imageKey": "13304",
+      "sourceUrl": "https://www.rsr.transports.gouv.qc.ca/Dispositifs/Details.aspx?cid=13304&che=PRESC&cat=PRESC",
+      "scrapedAt": "2026-07-27T00:00:00.000Z"
+    },
+    {
+      "cid": 13498,
+      "code": "P-240-P-4-D",
+      "nameFr": "Panonceau de direction",
+      "descriptionFr": "Panonceau indiquant une direction.",
+      "category": {
+        "che": "PANCX",
+        "cat": "PANCX",
+        "pathFr": ["Panonceaux"]
+      },
+      "hasDevis": true,
+      "imageKey": "13498",
+      "sourceUrl": "https://www.rsr.transports.gouv.qc.ca/Dispositifs/Details.aspx?cid=13498&che=PANCX&cat=PANCX",
+      "scrapedAt": "2026-07-27T00:00:00.000Z"
+    },
+    {
+      "cid": 35057,
+      "code": "T-240-P-12",
+      "nameFr": "Panonceau de direction tout droit (carrefour giratoire)",
+      "descriptionFr": "Panonceau de direction tout droit pour carrefour giratoire (travaux).",
+      "category": {
+        "che": "PANCX",
+        "cat": "PANCX",
+        "pathFr": ["Panonceaux"]
+      },
+      "hasDevis": true,
+      "imageKey": "35057",
+      "sourceUrl": "https://www.rsr.transports.gouv.qc.ca/Dispositifs/Details.aspx?cid=35057&che=PANCX&cat=PANCX",
+      "scrapedAt": "2026-07-27T00:00:00.000Z"
+    },
+    {
+      "cid": 13022,
+      "code": "I-376-1",
+      "nameFr": "Période d'ouverture",
+      "descriptionFr": "Panneau indiquant une période d'ouverture.",
+      "category": {
+        "che": "INDCT-INFRM",
+        "cat": "INFRM",
+        "pathFr": ["Indication", "Information"]
+      },
+      "hasDevis": true,
+      "imageKey": "13022",
+      "sourceUrl": "https://www.rsr.transports.gouv.qc.ca/Dispositifs/Details.aspx?cid=13022&che=INDCT-INFRM&cat=INFRM",
+      "scrapedAt": "2026-07-27T00:00:00.000Z"
+    },
+    {
+      "cid": 12763,
+      "code": "I-130-3",
+      "nameFr": "Identification d'autoroute",
+      "descriptionFr": "Écusson d'identification d'autoroute.",
+      "category": {
+        "che": "INDCT-REPRG-ECUAU",
+        "cat": "ECUAU",
+        "pathFr": ["Indication", "Repérage", "Écussons d'autoroute"]
+      },
+      "hasDevis": false,
+      "imageKey": "12763",
+      "sourceUrl": "https://www.rsr.transports.gouv.qc.ca/Dispositifs/Details.aspx?cid=12763&che=INDCT-REPRG-ECUAU&cat=ECUAU",
+      "scrapedAt": "2026-07-27T00:00:00.000Z"
+    },
+    {
+      "cid": 13792,
+      "code": "Rte-261",
+      "nameFr": "Écusson route 261",
+      "descriptionFr": "Écusson d'identification de la route 261.",
+      "category": {
+        "che": "INDCT-REPRG-ECURO",
+        "cat": "ECURO",
+        "pathFr": ["Indication", "Repérage", "Écussons de route"]
+      },
+      "hasDevis": false,
+      "imageKey": "13792",
+      "sourceUrl": "https://www.rsr.transports.gouv.qc.ca/Dispositifs/Details.aspx?cid=13792&che=INDCT-REPRG-ECURO&cat=ECURO",
+      "scrapedAt": "2026-07-27T00:00:00.000Z"
+    },
+    {
+      "cid": 14036,
+      "code": "T-D-100-2-D",
+      "nameFr": "Signal avancé de direction des voies",
+      "descriptionFr": "Signal avancé de direction des voies en zone de travaux.",
+      "category": {
+        "che": "TRAVX",
+        "cat": "TRAVX",
+        "pathFr": ["Travaux"]
+      },
+      "hasDevis": true,
+      "imageKey": "14036",
+      "sourceUrl": "https://www.rsr.transports.gouv.qc.ca/Dispositifs/Details.aspx?cid=14036&che=TRAVX&cat=TRAVX",
+      "scrapedAt": "2026-07-27T00:00:00.000Z"
+    }
+  ]
+}
