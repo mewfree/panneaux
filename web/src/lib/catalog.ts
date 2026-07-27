@@ -72,6 +72,11 @@ export function imageUrl(p: Panneau): string {
   return `/img/${p.imageKey}`;
 }
 
+/** Open Graph 1200×630 branded card (Worker: /og/{cid}.png from R2 key og/{cid}). */
+export function ogImageUrl(p: Panneau): string {
+  return `/og/${p.cid}.png`;
+}
+
 export function officialImageFallback(p: Panneau): string {
   return `https://www.rsr.transports.gouv.qc.ca/Gestionnaires/ObtenirImage.ashx?imgId=${p.cid}`;
 }

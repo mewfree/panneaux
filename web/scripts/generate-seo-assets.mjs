@@ -89,10 +89,29 @@ Allow: /
 Sitemap: ${SITE}/sitemap.xml
 `;
 
+// Slim catalog for Worker bot OG HTML (Facebook, Slack, etc.)
+const slim = {
+  scrapedAt: catalog.scrapedAt,
+  count: catalog.count ?? catalog.panneaux?.length ?? 0,
+  panneaux: (catalog.panneaux ?? []).map((p) => ({
+    cid: p.cid,
+    code: p.code,
+    nameFr: p.nameFr,
+    descriptionFr: p.descriptionFr,
+    imageKey: p.imageKey,
+    category: { pathFr: p.category?.pathFr ?? [] },
+  })),
+};
+
 fs.mkdirSync(publicDir, { recursive: true });
 fs.writeFileSync(path.join(publicDir, "sitemap.xml"), sitemap, "utf8");
 fs.writeFileSync(path.join(publicDir, "robots.txt"), robots, "utf8");
+fs.writeFileSync(
+  path.join(publicDir, "panneaux-catalog.json"),
+  JSON.stringify(slim),
+  "utf8",
+);
 
 console.log(
-  `SEO assets: ${urls.length} URLs → public/sitemap.xml, robots.txt (${SITE})`,
+  `SEO assets: ${urls.length} URLs → sitemap + robots + catalog (${slim.panneaux.length} items) · ${SITE}`,
 );

@@ -5,6 +5,7 @@ import {
   getBySlug,
   imageUrl,
   officialImageFallback,
+  ogImageUrl,
   panneauPath,
   topCategories,
 } from "../lib/catalog";
@@ -33,7 +34,7 @@ export function PanneauPage() {
     )?.slug ?? topCategories[0]?.slug;
 
   const path = panneauPath(p);
-  const img = imageUrl(p);
+  const og = ogImageUrl(p);
   const description =
     p.descriptionFr ||
     `Panneau de signalisation ${p.code} — ${p.nameFr}. Signalisation routière du Québec (${p.category.pathFr.join(", ")}).`;
@@ -44,14 +45,14 @@ export function PanneauPage() {
         title={`${p.code} — ${p.nameFr}`}
         description={description.slice(0, 300)}
         path={path}
-        image={img}
+        image={og}
         type="article"
         jsonLd={panneauJsonLd({
           code: p.code,
           nameFr: p.nameFr,
           descriptionFr: p.descriptionFr,
           path,
-          image: img.startsWith("http") ? img : undefined,
+          image: og,
           categoryPath: p.category.pathFr,
         })}
       />

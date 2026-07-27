@@ -32,6 +32,22 @@ pnpm scrape
 | ~--skip-images~   | Pas de téléchargement d’images |
 | ~--delay 750~     | Délai entre navigations (ms)   |
 
+* Images Open Graph (partage social)
+
+Cartes 1200×630 avec le panneau + code + nom :
+
+#+begin_src bash
+pnpm og:generate
+# puis upload R2 (clés og/{cid}) :
+for f in data/og/*; do
+  key="og/$(basename "${f%.*}")"
+  npx wrangler r2 object put "panneaux-images/${key}" --file="$f" --remote
+done
+#+end_src
+
+Servies par le Worker sur ~/og/{cid}.png~. Les crawlers (Facebook, Slack…)
+reçoivent aussi des meta OG statiques sur ~/panneau/...~.
+
 * Rebuild depuis le cache HTML
 
 Si les pages détail sont déjà dans ~scraper/.cache/html/~ :

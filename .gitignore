@@ -33,6 +33,7 @@ coverage/
 
 # Local image dumps (images live on R2)
 data/images/
+data/og/
 *.png
 *.jpg
 *.jpeg

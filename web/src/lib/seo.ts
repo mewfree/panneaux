@@ -149,10 +149,20 @@ export function panneauJsonLd(p: {
     keywords: [p.code, p.nameFr, ...p.categoryPath, "signalisation", "Québec"].join(
       ", ",
     ),
+    thumbnailUrl: p.image?.startsWith("http")
+      ? p.image
+      : p.image
+        ? `${SITE_URL}${p.image.startsWith("/") ? p.image : `/${p.image}`}`
+        : undefined,
     isPartOf: {
       "@type": "WebSite",
       name: SITE_NAME,
       url: SITE_URL,
     },
   };
+}
+
+/** Absolute OG card URL for a panneau cid. */
+export function absoluteOgUrl(cid: number): string {
+  return `${SITE_URL}/og/${cid}.png`;
 }

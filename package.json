@@ -14,6 +14,7 @@
     "scrape:sample": "pnpm --filter @panneaux/scraper scrape:sample",
     "scrape:images": "pnpm --filter @panneaux/scraper scrape:images",
     "scrape:rebuild": "pnpm --filter @panneaux/scraper rebuild-cache",
+    "og:generate": "pnpm --filter @panneaux/web og:generate",
     "typecheck": "pnpm -r typecheck"
   },
   "engines": {
