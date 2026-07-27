@@ -85,6 +85,30 @@ export function PanneauPage() {
               <dt className="text-xs text-slate-500">Devis technique</dt>
               <dd className="font-medium">{p.hasDevis ? "Disponible" : "Non disponible"}</dd>
             </div>
+            {p.usage && (
+              <div className="rounded-xl bg-slate-50 p-3">
+                <dt className="text-xs text-slate-500">Usage</dt>
+                <dd className="font-medium">{p.usage}</dd>
+              </div>
+            )}
+            {p.couleur && (
+              <div className="rounded-xl bg-slate-50 p-3">
+                <dt className="text-xs text-slate-500">Couleur</dt>
+                <dd className="font-medium">{p.couleur}</dd>
+              </div>
+            )}
+            {p.pellicule && (
+              <div className="rounded-xl bg-slate-50 p-3">
+                <dt className="text-xs text-slate-500">Pellicule</dt>
+                <dd className="font-medium">{p.pellicule}</dd>
+              </div>
+            )}
+            {p.tomeV && (
+              <div className="rounded-xl bg-slate-50 p-3">
+                <dt className="text-xs text-slate-500">Tome V</dt>
+                <dd className="font-mono font-medium">{p.tomeV}</dd>
+              </div>
+            )}
           </dl>
 
           <div className="flex flex-wrap gap-3">

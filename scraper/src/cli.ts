@@ -19,12 +19,13 @@ async function main() {
   const headless = !hasFlag("--headed");
   const skipDetails = hasFlag("--skip-details");
   const skipImages = hasFlag("--skip-images");
+  const imagesOnly = hasFlag("--images-only");
   const delayMs = Number(getArg("--delay") ?? "750");
 
   console.log("Panneaux QC — scrape RSR");
   console.log(
     JSON.stringify(
-      { sample, headless, skipDetails, skipImages, delayMs },
+      { sample, headless, skipDetails, skipImages, imagesOnly, delayMs },
       null,
       2,
     ),
@@ -36,6 +37,7 @@ async function main() {
       headless,
       skipDetails,
       skipImages,
+      imagesOnly,
       delayMs,
     });
 
@@ -43,14 +45,17 @@ async function main() {
     const catalogPath = path.join(DATA_DIR, "panneaux.json");
     const reportPath = path.join(DATA_DIR, "scrape-report.json");
 
-    // Merge with existing sample if sample mode and we want to keep demo data? Overwrite for now.
-    await fs.writeFile(catalogPath, JSON.stringify(catalog, null, 2) + "\n", "utf8");
+    // images-only keeps existing catalog metadata; still write report
+    if (!imagesOnly) {
+      await fs.writeFile(catalogPath, JSON.stringify(catalog, null, 2) + "\n", "utf8");
+    }
     await fs.writeFile(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
 
     console.log(`Écrit ${catalog.count} panneaux → ${catalogPath}`);
     console.log(`Rapport → ${reportPath}`);
     console.log(
-      `Détails: ${report.detailsFetched}, images: ${report.imagesDownloaded}, erreurs: ${report.errors.length}`,
+      `Pages: ${report.pagesCrawled}, détails: ${report.detailsFetched}, ` +
+        `images: ${report.imagesDownloaded} (échecs: ${report.imageFailures}), erreurs: ${report.errors.length}`,
     );
     if (report.errors.length) {
       console.log("Erreurs (aperçu):");

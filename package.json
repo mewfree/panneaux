@@ -12,6 +12,8 @@
     "deploy:only": "pnpm --filter @panneaux/web exec wrangler deploy",
     "scrape": "pnpm --filter @panneaux/scraper scrape",
     "scrape:sample": "pnpm --filter @panneaux/scraper scrape:sample",
+    "scrape:images": "pnpm --filter @panneaux/scraper scrape:images",
+    "scrape:rebuild": "pnpm --filter @panneaux/scraper rebuild-cache",
     "typecheck": "pnpm -r typecheck"
   },
   "engines": {

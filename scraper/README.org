@@ -32,6 +32,17 @@ pnpm scrape
 | ~--skip-images~   | Pas de téléchargement d’images |
 | ~--delay 750~     | Délai entre navigations (ms)   |
 
+* Rebuild depuis le cache HTML
+
+Si les pages détail sont déjà dans ~scraper/.cache/html/~ :
+
+#+begin_src bash
+pnpm scrape:rebuild
+#+end_src
+
+Réécrit ~data/panneaux.json~ avec les bons sélecteurs (code, nom, description,
+usage, couleur, pellicule, Tome V) sans recontacter le RSR.
+
 * Sorties
 
 - ~data/panneaux.json~ — catalogue

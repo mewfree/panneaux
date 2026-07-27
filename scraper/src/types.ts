@@ -15,6 +15,10 @@ export type Panneau = {
   nameEn?: string;
   descriptionFr?: string;
   descriptionEn?: string;
+  usage?: string;
+  couleur?: string;
+  pellicule?: string;
+  tomeV?: string;
   category: {
     che: string;
     cat: string;
@@ -42,5 +46,19 @@ export type ScrapeReport = {
   itemsListed: number;
   detailsFetched: number;
   imagesDownloaded: number;
+  imageFailures: number;
+  pagesCrawled: number;
   errors: { where: string; message: string }[];
+};
+
+export type DetailFields = {
+  code?: string;
+  nameFr?: string;
+  descriptionFr?: string;
+  usage?: string;
+  couleur?: string;
+  pellicule?: string;
+  tomeV?: string;
+  hasDevis?: boolean;
+  imgAlt?: string;
 };

@@ -27,10 +27,7 @@ export function Layout() {
           </Link>
           <nav className="flex items-center gap-1" aria-label="Navigation principale">
             <NavLink to="/" end className={navClass}>
-              Accueil
-            </NavLink>
-            <NavLink to="/recherche" className={navClass}>
-              Recherche
+              Explorer
             </NavLink>
             <NavLink to="/categories" className={navClass}>
               Catégories
@@ -39,7 +36,7 @@ export function Layout() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
         <Outlet />
       </main>
 
@@ -60,7 +57,7 @@ export function Layout() {
             Tome V.
           </p>
           <p className="text-xs">
-            Catalogue : {catalog.count} panneaux · mis à jour{" "}
+            Catalogue : {catalog.count.toLocaleString("fr-CA")} panneaux · mis à jour{" "}
             {new Date(catalog.scrapedAt).toLocaleDateString("fr-CA")}
           </p>
         </div>

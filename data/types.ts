@@ -29,6 +29,13 @@ export type Panneau = {
   nameEn?: string;
   descriptionFr?: string;
   descriptionEn?: string;
+  /** Usages (ex. Route, Autoroute) */
+  usage?: string;
+  couleur?: string;
+  /** Type(s) de pellicule (ex. IV) */
+  pellicule?: string;
+  /** Référence Tome V */
+  tomeV?: string;
   category: PanneauCategory;
   hasDevis: boolean;
   imageKey: string;

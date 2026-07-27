@@ -1,11 +1,30 @@
 import * as cheerio from "cheerio";
-import type { ScrapedListItem } from "./types.js";
+import type { DetailFields, ScrapedListItem } from "./types.js";
+
+const CODE_RE =
+  /\b((?:Auto|Rte|Pict|DIV)-[\w.-]+|[PTDI]-[\w.-]+|T-[A-Z]-[\w.-]+)\b/i;
+
+function clean(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function fieldById($: cheerio.CheerioAPI, id: string): string | undefined {
+  const direct = clean($(`#${id}`).text());
+  if (direct) return direct;
+  // ASP.NET ids sometimes vary slightly; match suffix
+  const suffix = id.includes("_") ? id.split("_").slice(-1)[0]! : id;
+  const via = clean($(`[id$="_${suffix}"], [id$="${suffix}"]`).first().text());
+  return via || undefined;
+}
 
 /**
  * Parse list cards from Panneaux.aspx HTML.
- * Structure (from archived pages):
- *   a[href*="Details.aspx?cid="] containing img + code + name
- *   devis link Utilitaires/Devis.aspx?cid=
+ *
+ * Card structure:
+ *   a.lienCombiner[href*="Details.aspx"][title="Voir le détail du dispositif CODE."]
+ *     img[alt=name]
+ *     strong: CODE + br + span.nomDispositif
+ *   a[href*="Devis.aspx?cid="] when devis exists
  */
 export function parseListPage(
   html: string,
@@ -14,54 +33,62 @@ export function parseListPage(
   const $ = cheerio.load(html);
   const byCid = new Map<number, ScrapedListItem>();
 
-  $('a[href*="Details.aspx"]').each((_, el) => {
+  $("a.lienCombiner[href*='Details.aspx'], a[href*='Details.aspx']").each((_, el) => {
     const href = $(el).attr("href") ?? "";
     const cidMatch = href.match(/[?&]cid=(\d+)/i);
     if (!cidMatch) return;
     const cid = Number(cidMatch[1]);
     if (!Number.isFinite(cid)) return;
 
-    const text = $(el).text().replace(/\s+/g, " ").trim();
-    // Prefer bold code/name structure
-    const strongs = $(el)
-      .find("strong, b")
-      .map((__, s) => $(s).text().replace(/\s+/g, " ").trim())
-      .get()
-      .filter(Boolean);
+    const title = $(el).attr("title") ?? "";
+    const codeFromTitle = title.match(/dispositif\s+(.+?)\.?\s*$/i)?.[1]?.trim();
 
-    let code = strongs[0] ?? "";
-    let nameFr = strongs.slice(1).join(" ") || text;
+    const strong = $(el).find("strong").first();
+    const nomSpan = strong.find("span.nomDispositif").text();
+    // strong text without the name span ≈ code (may include <br>)
+    let codeFromStrong = "";
+    if (strong.length) {
+      const clone = strong.clone();
+      clone.find("span.nomDispositif").remove();
+      codeFromStrong = clean(clone.text());
+    }
+
+    const imgAlt = $(el).find("img").attr("alt") ?? "";
+    let code = codeFromTitle || codeFromStrong;
+    let nameFr = clean(nomSpan) || clean(imgAlt);
 
     if (!code) {
-      // Fallback: first token that looks like a sign code
-      const m = text.match(
-        /\b([PTDI]-[\w.-]+|T-[A-Z]-[\w.-]+|Rte-[\w.-]+|Aut-[\w.-]+)\b/i,
-      );
+      const m = clean($(el).text()).match(CODE_RE);
       code = m?.[1] ?? `CID-${cid}`;
-      nameFr = text.replace(code, "").trim() || code;
+    }
+    if (!nameFr) {
+      nameFr = code;
     }
 
-    // Clean name if it still starts with code
-    if (nameFr.toLowerCase().startsWith(code.toLowerCase())) {
-      nameFr = nameFr.slice(code.length).trim();
+    // Devis: prefer same-card devis link, else any devis for this cid
+    const card =
+      $(el).closest(".fond, .dispositif, li, .rptModele, [id*='rptModele']") ||
+      $(el).parent();
+    let hasDevis = false;
+    const devisInCard = card.find(`a[href*='Devis.aspx'][href*='cid=${cid}']`);
+    if (devisInCard.length) {
+      hasDevis = true;
+    } else if ($(`a[href*='Devis.aspx'][href*='cid=${cid}']`).length) {
+      hasDevis = true;
+    } else if (
+      card.find(`[id*='divAvecDevis']`).length &&
+      card.find(`a[href*='Devis.aspx']`).length
+    ) {
+      hasDevis = true;
     }
 
-    const parent = $(el).closest("div, li, td, article, section, tr");
-    const devisNear =
-      parent.find(`a[href*="Devis.aspx"][href*="cid=${cid}"]`).attr("href") ??
-      $(el).parent().find(`a[href*="Devis.aspx"][href*="cid=${cid}"]`).attr("href") ??
-      $(`a[href*="Devis.aspx"][href*="cid=${cid}"]`).attr("href") ??
-      "";
-    const hasDevis = /Devis\.aspx/i.test(devisNear);
-
-    // Prefer che/cat from the detail link if present
     const cheMatch = href.match(/[?&]che=([^&]+)/i);
     const catMatch = href.match(/[?&]cat=([^&]+)/i);
 
     byCid.set(cid, {
       cid,
-      code: code.trim(),
-      nameFr: nameFr.trim() || code.trim(),
+      code,
+      nameFr,
       hasDevis,
       che: cheMatch?.[1] ? decodeURIComponent(cheMatch[1]) : ctx.che,
       cat: catMatch?.[1] ? decodeURIComponent(catMatch[1]) : ctx.cat,
@@ -72,41 +99,46 @@ export function parseListPage(
   return [...byCid.values()];
 }
 
-export function parseDetailPage(html: string): {
-  descriptionFr?: string;
-  nameFr?: string;
-  code?: string;
-} {
+/** Parse "Page X sur Y" from list HTML. */
+export function parseListPagination(html: string): { page: number; total: number } | null {
+  const m = html.match(/Page\s+(\d+)\s+sur\s+(\d+)/i);
+  if (!m) return null;
+  return { page: Number(m[1]), total: Number(m[2]) };
+}
+
+/**
+ * Parse Details.aspx using official field IDs.
+ */
+export function parseDetailPage(html: string): DetailFields {
   const $ = cheerio.load(html);
-  // Heuristics — RSR markup varies; capture main content text blocks.
-  const title =
-    $("h1").first().text().replace(/\s+/g, " ").trim() ||
-    $("h2").first().text().replace(/\s+/g, " ").trim();
 
-  let code: string | undefined;
-  let nameFr: string | undefined;
-  if (title) {
-    const m = title.match(
-      /^([PTDI]-[\w.-]+|T-[A-Z]-[\w.-]+|Rte-[\w.-]+|Aut-[\w.-]+)\s*(.*)$/i,
-    );
-    if (m) {
-      code = m[1];
-      nameFr = m[2]?.trim() || undefined;
-    } else {
-      nameFr = title;
-    }
-  }
+  const code = fieldById($, "ctl00_cphContenu_FicheDetails_txtNumero");
+  const nameFr = fieldById($, "ctl00_cphContenu_FicheDetails_txtNom");
+  const descriptionFr = fieldById($, "ctl00_cphContenu_FicheDetails_txtDescription");
+  const usage = fieldById($, "ctl00_cphContenu_FicheDetails_txtUsage");
+  const couleur = fieldById($, "ctl00_cphContenu_FicheDetails_txtCouleur");
+  const pellicule = fieldById($, "ctl00_cphContenu_FicheDetails_txtTypePellicule");
+  const tomeV = fieldById($, "ctl00_cphContenu_FicheDetails_txtReferenceTomeV");
 
-  // Description: longest paragraph in main content
-  const paragraphs = $("p")
-    .map((_, el) => $(el).text().replace(/\s+/g, " ").trim())
-    .get()
-    .filter((t) => t.length > 40 && !/cookie|javascript|navigateur/i.test(t));
+  // RSR renders either divAvecDevis or divSansDevis
+  const hasDevis =
+    $("[id$='divAvecDevis']").length > 0 ||
+    ($("a.btn_devis_contenu[href*='Devis.aspx']").length > 0 &&
+      $("[id$='divSansDevis']").length === 0);
 
-  paragraphs.sort((a, b) => b.length - a.length);
-  const descriptionFr = paragraphs[0];
+  const imgAlt = $('img[src*="ObtenirImage"]').attr("alt") || undefined;
 
-  return { descriptionFr, nameFr, code };
+  return {
+    code,
+    nameFr,
+    descriptionFr,
+    usage,
+    couleur,
+    pellicule,
+    tomeV,
+    hasDevis,
+    imgAlt,
+  };
 }
 
 export function categoryListUrl(che: string, cat: string): string {

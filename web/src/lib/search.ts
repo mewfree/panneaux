@@ -5,11 +5,11 @@ import type { Panneau } from "./types";
 export type SearchHit = Panneau & { score?: number };
 
 const mini = new MiniSearch<Panneau>({
-  fields: ["code", "nameFr", "nameEn", "descriptionFr", "pathText", "cat"],
+  fields: ["code", "nameFr", "nameEn", "descriptionFr", "pathText", "cat", "usage", "couleur"],
   storeFields: ["cid"],
   idField: "cid",
   searchOptions: {
-    boost: { code: 4, nameFr: 2, nameEn: 1.5 },
+    boost: { code: 4, nameFr: 2, nameEn: 1.5, descriptionFr: 1 },
     prefix: true,
     fuzzy: 0.2,
   },
