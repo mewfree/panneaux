@@ -3,13 +3,65 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panneaux QC — Signalisation routière du Québec</title>
     <meta
       name="description"
-      content="Consultez et recherchez les panneaux de signalisation routière du Québec — danger, prescription, travaux, indication et panonceaux."
+      content="Consultez et recherchez les panneaux de signalisation routière du Québec : danger, prescription, travaux, indication et panonceaux. Répertoire visuel non officiel basé sur le RSR (MTMD)."
     />
+    <meta
+      name="keywords"
+      content="panneaux signalisation, signalisation routière Québec, code de la route Québec, panneau danger, panneau prescription, SAAQ, RSR, MTMD, panneaux QC"
+    />
+    <meta name="author" content="Panneaux QC" />
+    <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#0f172a" />
-    <title>Panneaux QC — Signalisation routière du Québec</title>
+    <meta name="color-scheme" content="light" />
+    <link rel="canonical" href="https://panneaux.quebec/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_CA" />
+    <meta property="og:site_name" content="Panneaux QC" />
+    <meta property="og:title" content="Panneaux QC — Signalisation routière du Québec" />
+    <meta
+      property="og:description"
+      content="Consultez et recherchez les panneaux de signalisation routière du Québec : danger, prescription, travaux, indication et panonceaux."
+    />
+    <meta property="og:url" content="https://panneaux.quebec/" />
+    <meta property="og:image" content="https://panneaux.quebec/og.png" />
+    <meta property="og:image:alt" content="Panneaux QC — signalisation routière du Québec" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Panneaux QC — Signalisation routière du Québec" />
+    <meta
+      name="twitter:description"
+      content="Répertoire visuel et recherche des panneaux de signalisation routière du Québec."
+    />
+    <meta name="twitter:image" content="https://panneaux.quebec/og.png" />
+
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Panneaux QC",
+        "alternateName": ["Panneaux de signalisation Québec", "Signalisation routière Québec"],
+        "url": "https://panneaux.quebec/",
+        "description": "Consultez et recherchez les panneaux de signalisation routière du Québec.",
+        "inLanguage": "fr-CA",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://panneaux.quebec/?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
   </head>
   <body class="min-h-dvh bg-slate-50 text-slate-900 antialiased">
     <div id="root"></div>

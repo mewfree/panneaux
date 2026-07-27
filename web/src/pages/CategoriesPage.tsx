@@ -1,14 +1,22 @@
 import { Link } from "react-router-dom";
+import { Seo } from "../components/Seo";
 import { countForCategory, topCategories } from "../lib/catalog";
 import type { CategoryNode } from "../lib/types";
 
 export function CategoriesPage() {
   return (
     <div className="space-y-6">
+      <Seo
+        title="Catégories de panneaux de signalisation du Québec"
+        description="Parcourez les catégories de signalisation routière du Québec : danger, prescription, travaux, indication, panonceaux — hiérarchie du répertoire RSR."
+        path="/categories"
+      />
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">Catégories</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Catégories de signalisation routière
+        </h1>
         <p className="text-slate-600">
-          Parcourez la hiérarchie du répertoire officiel RSR.
+          Parcourez la hiérarchie des panneaux du Québec (répertoire RSR / MTMD).
         </p>
       </div>
       <div className="space-y-4">

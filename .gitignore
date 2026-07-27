@@ -39,3 +39,9 @@ data/images/
 *.gif
 *.webp
 !web/public/**/*.svg
+!web/public/og.png
+!web/public/favicon.svg
+
+# Generated at build (also committed optionally)
+# web/public/sitemap.xml
+# web/public/robots.txt

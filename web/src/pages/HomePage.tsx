@@ -3,8 +3,10 @@ import { Link, useSearchParams } from "react-router-dom";
 import { FilterChip } from "../components/FilterChip";
 import { PanneauGrid } from "../components/PanneauGrid";
 import { SearchBox } from "../components/SearchBox";
+import { Seo } from "../components/Seo";
 import { catalog, countForCategory, topCategories } from "../lib/catalog";
 import { searchPanneaux } from "../lib/search";
+import { DEFAULT_DESCRIPTION, websiteJsonLd } from "../lib/seo";
 import { newShuffleSeed, shuffle } from "../lib/shuffle";
 
 const PAGE_SIZE = 48;
@@ -69,16 +71,35 @@ export function HomePage() {
 
   const filtering = Boolean(q.trim() || catFilter || prefix || randomOn);
 
+  const seoTitle = q.trim()
+    ? `Recherche « ${q.trim()} » — panneaux du Québec`
+    : catFilter
+      ? `Panneaux · ${topCategories.find((c) => c.cat === catFilter)?.nameFr ?? catFilter}`
+      : undefined;
+  const seoDesc = q.trim()
+    ? `${results.length} panneau(x) pour « ${q.trim()} » dans le répertoire de signalisation routière du Québec.`
+    : DEFAULT_DESCRIPTION;
+
   return (
     <div className="space-y-6">
+      <Seo
+        title={seoTitle}
+        description={seoDesc}
+        path={
+          q || catFilter || prefix || randomOn
+            ? `/?${params.toString()}`
+            : "/"
+        }
+        jsonLd={websiteJsonLd()}
+      />
       <header className="space-y-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-            Panneaux de signalisation du Québec
+            Panneaux de signalisation routière du Québec
           </h1>
           <p className="text-slate-600">
-            {catalog.count.toLocaleString("fr-CA")} panneaux — cherchez par code ou nom, ou
-            parcourez par catégorie.
+            {catalog.count.toLocaleString("fr-CA")} panneaux du Québec — cherchez par code
+            ou nom (ex. P-70, arrêt, danger), ou parcourez par catégorie.
           </p>
         </div>
 

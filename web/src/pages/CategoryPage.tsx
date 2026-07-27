@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { PanneauGrid } from "../components/PanneauGrid";
+import { Seo } from "../components/Seo";
 import {
   findCategoryBySlug,
   panneauxInCategory,
@@ -13,6 +14,7 @@ export function CategoryPage() {
   if (!node) {
     return (
       <div className="space-y-4">
+        <Seo title="Catégorie introuvable" path={`/categorie/${slug}`} noindex />
         <h1 className="text-2xl font-bold">Catégorie introuvable</h1>
         <Link to="/categories" className="text-brand-600 hover:underline">
           ← Retour aux catégories
@@ -23,9 +25,17 @@ export function CategoryPage() {
 
   const items = panneauxInCategory(node);
   const parent = findParent(node.slug);
+  const desc =
+    node.descriptionFr ||
+    `Panneaux de signalisation « ${node.nameFr} » au Québec (${items.length} dispositifs).`;
 
   return (
     <div className="space-y-6">
+      <Seo
+        title={`${node.nameFr} — panneaux de signalisation Québec`}
+        description={desc}
+        path={`/categorie/${node.slug}`}
+      />
       <nav className="text-sm text-slate-500" aria-label="Fil d'Ariane">
         <Link to="/categories" className="hover:text-slate-800">
           Catégories

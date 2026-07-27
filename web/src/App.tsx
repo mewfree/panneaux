@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes, useSearchParams } from "react-router-dom";
 import { Layout } from "./components/Layout";
+import { Seo } from "./components/Seo";
 import { CategoriesPage } from "./pages/CategoriesPage";
 import { CategoryPage } from "./pages/CategoryPage";
 import { HomePage } from "./pages/HomePage";
@@ -30,6 +31,7 @@ function RechercheRedirect() {
 function NotFound() {
   return (
     <div className="space-y-2 py-16 text-center">
+      <Seo title="Page introuvable" path="/404" noindex />
       <h1 className="text-2xl font-bold">Page introuvable</h1>
       <p className="text-slate-600">Cette adresse ne correspond à aucune page.</p>
       <a href="/" className="text-sm font-medium text-brand-600 hover:underline">

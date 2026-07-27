@@ -1,11 +1,14 @@
 import { Link, useParams } from "react-router-dom";
 import { PanneauImage } from "../components/PanneauImage";
+import { Seo } from "../components/Seo";
 import {
   getBySlug,
   imageUrl,
   officialImageFallback,
+  panneauPath,
   topCategories,
 } from "../lib/catalog";
+import { panneauJsonLd } from "../lib/seo";
 import { devisUrl } from "../lib/types";
 
 export function PanneauPage() {
@@ -15,9 +18,10 @@ export function PanneauPage() {
   if (!p) {
     return (
       <div className="space-y-4">
+        <Seo title="Panneau introuvable" path={`/panneau/${codeSlug}`} noindex />
         <h1 className="text-2xl font-bold">Panneau introuvable</h1>
-        <Link to="/recherche" className="text-brand-600 hover:underline">
-          ← Retour à la recherche
+        <Link to="/" className="text-brand-600 hover:underline">
+          ← Retour à l’exploration
         </Link>
       </div>
     );
@@ -28,8 +32,29 @@ export function PanneauPage() {
       (c) => c.cat === p.category.cat || p.category.che.startsWith(c.cat),
     )?.slug ?? topCategories[0]?.slug;
 
+  const path = panneauPath(p);
+  const img = imageUrl(p);
+  const description =
+    p.descriptionFr ||
+    `Panneau de signalisation ${p.code} — ${p.nameFr}. Signalisation routière du Québec (${p.category.pathFr.join(", ")}).`;
+
   return (
     <article className="space-y-8">
+      <Seo
+        title={`${p.code} — ${p.nameFr}`}
+        description={description.slice(0, 300)}
+        path={path}
+        image={img}
+        type="article"
+        jsonLd={panneauJsonLd({
+          code: p.code,
+          nameFr: p.nameFr,
+          descriptionFr: p.descriptionFr,
+          path,
+          image: img.startsWith("http") ? img : undefined,
+          categoryPath: p.category.pathFr,
+        })}
+      />
       <nav className="text-sm text-slate-500" aria-label="Fil d'Ariane">
         <Link to="/" className="hover:text-slate-800">
           Accueil
