@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { FilterChip } from "../components/FilterChip";
 import { PanneauGrid } from "../components/PanneauGrid";
@@ -22,6 +22,7 @@ export function HomePage() {
   const seed = seedParam ? Number(seedParam) : null;
   const [localQ, setLocalQ] = useState(q);
   const [visible, setVisible] = useState(PAGE_SIZE);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLocalQ(q);
@@ -47,6 +48,24 @@ export function HomePage() {
 
   const shown = results.slice(0, visible);
   const hasMore = visible < results.length;
+
+  // Infinite scroll: load the next page when the sentinel enters the viewport
+  useEffect(() => {
+    if (!hasMore) return;
+    const el = loadMoreRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisible((n) => Math.min(n + PAGE_SIZE, results.length));
+        }
+      },
+      { rootMargin: "400px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, results.length, visible]);
 
   function update(next: Record<string, string | null>) {
     const p = new URLSearchParams(params);
@@ -204,14 +223,12 @@ export function HomePage() {
       />
 
       {hasMore && (
-        <div className="flex justify-center pt-2">
-          <button
-            type="button"
-            onClick={() => setVisible((n) => n + PAGE_SIZE)}
-            className="cursor-pointer rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-800 shadow-sm hover:border-slate-300"
-          >
-            Afficher plus ({Math.min(PAGE_SIZE, results.length - visible)} de plus)
-          </button>
+        <div
+          ref={loadMoreRef}
+          className="flex justify-center py-6"
+          aria-hidden
+        >
+          <span className="text-sm text-slate-400">Chargement…</span>
         </div>
       )}
     </div>
