@@ -89,17 +89,22 @@ Allow: /
 Sitemap: ${SITE}/sitemap.xml
 `;
 
-// Slim catalog for Worker bot OG HTML (Facebook, Slack, etc.)
+// Slim catalog for Worker bot HTML (home / categories / panneau OG)
 const slim = {
   scrapedAt: catalog.scrapedAt,
   count: catalog.count ?? catalog.panneaux?.length ?? 0,
+  categories: categories.categories,
   panneaux: (catalog.panneaux ?? []).map((p) => ({
     cid: p.cid,
     code: p.code,
     nameFr: p.nameFr,
     descriptionFr: p.descriptionFr,
     imageKey: p.imageKey,
-    category: { pathFr: p.category?.pathFr ?? [] },
+    category: {
+      pathFr: p.category?.pathFr ?? [],
+      cat: p.category?.cat,
+      che: p.category?.che,
+    },
   })),
 };
 
