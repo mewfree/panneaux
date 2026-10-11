@@ -8,35 +8,7 @@ export type ScrapedListItem = {
   pathFr: string[];
 };
 
-export type Panneau = {
-  cid: number;
-  code: string;
-  nameFr: string;
-  nameEn?: string;
-  descriptionFr?: string;
-  descriptionEn?: string;
-  usage?: string;
-  couleur?: string;
-  pellicule?: string;
-  tomeV?: string;
-  category: {
-    che: string;
-    cat: string;
-    pathFr: string[];
-  };
-  hasDevis: boolean;
-  imageKey: string;
-  sourceUrl: string;
-  scrapedAt: string;
-};
-
-export type CatalogFile = {
-  version: number;
-  scrapedAt: string;
-  source: string;
-  count: number;
-  panneaux: Panneau[];
-};
+export type { CatalogFile, Panneau } from "../../data/types.js";
 
 export type ScrapeReport = {
   startedAt: string;

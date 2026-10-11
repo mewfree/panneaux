@@ -1,4 +1,6 @@
 import * as cheerio from "cheerio";
+import { BASE_URL, PANNEAUX_URL } from "./config.js";
+import { officialImageUrl } from "../../data/types.js";
 import type { DetailFields, ScrapedListItem } from "./types.js";
 
 const CODE_RE =
@@ -33,6 +35,13 @@ export function parseListPage(
   const $ = cheerio.load(html);
   const byCid = new Map<number, ScrapedListItem>();
 
+  // One pass over devis links instead of a page-wide selector per card.
+  const devisCids = new Set<number>();
+  $("a[href*='Devis.aspx']").each((_, el) => {
+    const m = ($(el).attr("href") ?? "").match(/[?&]cid=(\d+)/i);
+    if (m) devisCids.add(Number(m[1]));
+  });
+
   $("a.lienCombiner[href*='Details.aspx'], a[href*='Details.aspx']").each((_, el) => {
     const href = $(el).attr("href") ?? "";
     const cidMatch = href.match(/[?&]cid=(\d+)/i);
@@ -65,22 +74,12 @@ export function parseListPage(
       nameFr = code;
     }
 
-    // Devis: prefer same-card devis link, else any devis for this cid
-    const card =
-      $(el).closest(".fond, .dispositif, li, .rptModele, [id*='rptModele']") ||
-      $(el).parent();
-    let hasDevis = false;
-    const devisInCard = card.find(`a[href*='Devis.aspx'][href*='cid=${cid}']`);
-    if (devisInCard.length) {
-      hasDevis = true;
-    } else if ($(`a[href*='Devis.aspx'][href*='cid=${cid}']`).length) {
-      hasDevis = true;
-    } else if (
-      card.find(`[id*='divAvecDevis']`).length &&
-      card.find(`a[href*='Devis.aspx']`).length
-    ) {
-      hasDevis = true;
-    }
+    // Devis: a devis link for this cid anywhere on the page, else a card flagged « avec devis »
+    const card = $(el).closest(".fond, .dispositif, li, .rptModele, [id*='rptModele']");
+    const hasDevis =
+      devisCids.has(cid) ||
+      (card.find(`[id*='divAvecDevis']`).length > 0 &&
+        card.find(`a[href*='Devis.aspx']`).length > 0);
 
     const cheMatch = href.match(/[?&]che=([^&]+)/i);
     const catMatch = href.match(/[?&]cat=([^&]+)/i);
@@ -142,13 +141,9 @@ export function parseDetailPage(html: string): DetailFields {
 }
 
 export function categoryListUrl(che: string, cat: string): string {
-  return `https://www.rsr.transports.gouv.qc.ca/Dispositifs/Panneaux.aspx?che=${encodeURIComponent(che)}&cat=${encodeURIComponent(cat)}`;
+  return `${PANNEAUX_URL}?che=${encodeURIComponent(che)}&cat=${encodeURIComponent(cat)}`;
 }
 
 export function detailUrl(cid: number, che: string, cat: string): string {
-  return `https://www.rsr.transports.gouv.qc.ca/Dispositifs/Details.aspx?cid=${cid}&che=${encodeURIComponent(che)}&cat=${encodeURIComponent(cat)}`;
-}
-
-export function imageUrl(cid: number): string {
-  return `https://www.rsr.transports.gouv.qc.ca/Gestionnaires/ObtenirImage.ashx?imgId=${cid}`;
+  return `${BASE_URL}/Dispositifs/Details.aspx?cid=${cid}&che=${encodeURIComponent(che)}&cat=${encodeURIComponent(cat)}`;
 }

@@ -5,15 +5,20 @@
  *
  * Usage (racine monorepo) :
  *   node web/scripts/generate-og-images.mjs
+ *   node web/scripts/generate-og-images.mjs --concurrency 4
  *   node web/scripts/generate-og-images.mjs --limit 20
  *   node web/scripts/generate-og-images.mjs --cid 12451
  *
  * Sortie : data/og/{cid}.png  →  uploader vers R2 sous la clé « og/{cid} »
  */
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../..");
@@ -29,6 +34,10 @@ function argVal(name) {
 const limit = argVal("--limit") ? Number(argVal("--limit")) : Infinity;
 const onlyCid = argVal("--cid") ? Number(argVal("--cid")) : null;
 const force = args.includes("--force");
+const concurrency = Math.max(
+  1,
+  Number(argVal("--concurrency") || Math.min(8, os.availableParallelism())),
+);
 
 const FONT_BOLD = [
   "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
@@ -55,19 +64,18 @@ function findSourceImage(cid) {
   return null;
 }
 
-/** Truncate for annotate; escape IM special chars. */
-function safeAnnotate(text, max = 42) {
-  let t = String(text || "").replace(/\s+/g, " ").trim();
-  if (t.length > max) t = t.slice(0, max - 1) + "…";
-  // ImageMagick annotate: escape \ and %
-  return t.replace(/\\/g, "\\\\").replace(/%/g, "%%");
-}
-
 /** Escape special chars for ImageMagick -annotate (no length truncate). */
 function escapeAnnotate(text) {
   return String(text || "")
     .replace(/\\/g, "\\\\")
     .replace(/%/g, "%%");
+}
+
+/** Collapse whitespace, truncate with an ellipsis, then escape for annotate. */
+function safeAnnotate(text, max = 42) {
+  let t = String(text || "").replace(/\s+/g, " ").trim();
+  if (t.length > max) t = t.slice(0, max - 1) + "…";
+  return escapeAnnotate(t);
 }
 
 function wrapLines(text, maxLen = 36, maxLines = 3) {
@@ -99,12 +107,12 @@ function wrapLines(text, maxLen = 36, maxLines = 3) {
   if (cur && lines.length < maxLines) lines.push(cur);
   // Single overlong word
   if (lines.length === 0 && full) {
-    lines.push(safeAnnotate(full, maxLen));
+    lines.push(full.length > maxLen ? `${full.slice(0, maxLen - 1)}…` : full);
   }
   return lines.map((l) => escapeAnnotate(l));
 }
 
-function generateOne(cid, code, nameFr) {
+async function generateOne(cid, code, nameFr) {
   const src = findSourceImage(cid);
   if (!src) return { ok: false, reason: "no source image" };
 
@@ -120,7 +128,7 @@ function generateOne(cid, code, nameFr) {
   const textX = 620;
 
   // Build magick args: background + panneau + texts
-  const args = [
+  const magickArgs = [
     "-size",
     "1200x630",
     `xc:#0f172a`,
@@ -158,7 +166,7 @@ function generateOne(cid, code, nameFr) {
   let y = 155;
   const titleLineH = 50;
   for (const line of titleLines) {
-    args.push(
+    magickArgs.push(
       "-fill",
       "#f8fafc",
       "-font",
@@ -174,7 +182,7 @@ function generateOne(cid, code, nameFr) {
 
   // Code / id — secondary, under title
   y += 10;
-  args.push(
+  magickArgs.push(
     "-fill",
     "#94a3b8",
     "-font",
@@ -186,7 +194,7 @@ function generateOne(cid, code, nameFr) {
     codeText,
   );
 
-  args.push(
+  magickArgs.push(
     "-fill",
     "#475569",
     "-font",
@@ -200,13 +208,10 @@ function generateOne(cid, code, nameFr) {
   );
 
   try {
-    execFileSync("magick", args, { stdio: "pipe" });
+    await execFileAsync("magick", magickArgs);
     return { ok: true };
   } catch (err) {
-    return {
-      ok: false,
-      reason: err.stderr?.toString?.() || err.message || String(err),
-    };
+    return { ok: false, reason: err.stderr?.toString?.() || err.message || String(err) };
   }
 }
 
@@ -220,21 +225,31 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
 let ok = 0;
 let skip = 0;
 let fail = 0;
+let done = 0;
+let next = 0;
 
-console.log(`OG: ${list.length} panneaux → ${OUT_DIR}`);
+console.log(`OG: ${list.length} panneaux → ${OUT_DIR} (concurrency ${concurrency})`);
 
-for (const [i, p] of list.entries()) {
-  const r = generateOne(p.cid, p.code, p.nameFr);
-  if (r.ok && r.skipped) skip++;
-  else if (r.ok) ok++;
-  else {
-    fail++;
-    if (fail <= 10) console.warn(`  fail ${p.cid}: ${r.reason}`);
-  }
-  if ((i + 1) % 100 === 0 || i === list.length - 1) {
-    console.log(`  ${i + 1}/${list.length} (ok ${ok}, skip ${skip}, fail ${fail})`);
+async function worker() {
+  while (next < list.length) {
+    const p = list[next++];
+    const r = await generateOne(p.cid, p.code, p.nameFr);
+    if (r.ok && r.skipped) skip++;
+    else if (r.ok) ok++;
+    else {
+      fail++;
+      if (fail <= 10) console.warn(`  fail ${p.cid}: ${r.reason}`);
+    }
+    done++;
+    if (done % 100 === 0 || done === list.length) {
+      console.log(`  ${done}/${list.length} (ok ${ok}, skip ${skip}, fail ${fail})`);
+    }
   }
 }
+
+await Promise.all(
+  Array.from({ length: Math.min(concurrency, list.length) }, () => worker()),
+);
 
 console.log(`Terminé: générés ${ok}, déjà présents ${skip}, échecs ${fail}`);
 console.log(`Upload R2 exemple:`);

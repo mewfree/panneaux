@@ -2,6 +2,8 @@
  * Cloudflare Worker: SPA assets + R2 images + OG social previews + bot meta.
  */
 
+import { codeToSlug } from "../../data/types";
+
 export interface Env {
   ASSETS: Fetcher;
   IMAGES?: R2Bucket;
@@ -20,7 +22,7 @@ const PANNEAU_LINK_CAP = 500;
 
 /** Crawlers that need static og: meta (don't run our React SEO). */
 const BOT_UA =
-  /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|TelegramBot|SkypeUriPreview|Applebot|Googlebot|bingbot|DuckDuckBot|Slurp|Baiduspider|YandexBot|Embedly|Quora Link Preview|Showyoubot|outbrain|pinterest|redditbot|vkShare|W3C_Validator|flipboard|tumblr|bitlybot|SkypeUriPreview|nuzzel|Discordbot|Qwantify|pinterestbot|Bitrix link preview|XING-contenttabreceiver|Chrome-Lighthouse|Viber|Yahoo! Slurp/i;
+  /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|TelegramBot|Applebot|Googlebot|bingbot|DuckDuckBot|Slurp|Baiduspider|YandexBot|Embedly|Quora Link Preview|Showyoubot|outbrain|pinterest|redditbot|vkShare|W3C_Validator|flipboard|tumblr|bitlybot|nuzzel|Qwantify|Bitrix link preview|XING-contenttabreceiver|Chrome-Lighthouse|Viber/i;
 
 type CatalogCategory = {
   cat: string;
@@ -44,56 +46,58 @@ type CatalogPanneau = {
 type Catalog = {
   panneaux: CatalogPanneau[];
   categories: CatalogCategory[];
+  /** codeToSlug(code) → panneau, plus String(cid) as fallback key. */
+  bySlug: Map<string, CatalogPanneau>;
+  categoryBySlug: Map<string, CatalogCategory>;
 };
 
-let catalogCache: Catalog | null = null;
-
-async function loadCatalog(env: Env, origin: string): Promise<Catalog> {
-  if (catalogCache) return catalogCache;
-  // Slim catalog shipped as static asset (web/public/panneaux-catalog.json)
-  const res = await env.ASSETS.fetch(
-    new Request(new URL("/panneaux-catalog.json", origin)),
-  );
-  if (!res.ok) {
-    catalogCache = { panneaux: [], categories: [] };
-    return catalogCache;
+function buildCatalog(
+  panneaux: CatalogPanneau[],
+  categories: CatalogCategory[],
+): Catalog {
+  const bySlug = new Map<string, CatalogPanneau>();
+  for (const p of panneaux) {
+    const slug = codeToSlug(p.code);
+    if (!bySlug.has(slug)) bySlug.set(slug, p);
   }
-  const data = (await res.json()) as {
-    panneaux?: CatalogPanneau[];
-    categories?: CatalogCategory[];
-  };
-  catalogCache = {
-    panneaux: data.panneaux ?? [],
-    categories: data.categories ?? [],
-  };
-  return catalogCache;
-}
-
-function codeToSlug(code: string): string {
-  return code
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-function findBySlug(list: CatalogPanneau[], slug: string): CatalogPanneau | undefined {
-  const s = slug.toLowerCase();
-  return (
-    list.find((p) => codeToSlug(p.code) === s) ||
-    list.find((p) => String(p.cid) === s)
-  );
-}
-
-function findCategoryBySlug(
-  slug: string,
-  nodes: CatalogCategory[] = [],
-): CatalogCategory | undefined {
-  for (const node of nodes) {
-    if (node.slug === slug) return node;
-    const child = findCategoryBySlug(slug, node.children ?? []);
-    if (child) return child;
+  for (const p of panneaux) {
+    const cid = String(p.cid);
+    if (!bySlug.has(cid)) bySlug.set(cid, p);
   }
-  return undefined;
+
+  const categoryBySlug = new Map<string, CatalogCategory>();
+  const walk = (nodes: CatalogCategory[]) => {
+    for (const n of nodes) {
+      categoryBySlug.set(n.slug, n);
+      walk(n.children ?? []);
+    }
+  };
+  walk(categories);
+
+  return { panneaux, categories, bySlug, categoryBySlug };
+}
+
+let catalogPromise: Promise<Catalog> | null = null;
+
+function loadCatalog(env: Env, origin: string): Promise<Catalog> {
+  // Slim catalog shipped as static asset (web/public/panneaux-catalog.json).
+  // Cache the promise so concurrent cold requests share one fetch; a failure
+  // yields an empty catalog for this request only and is retried next time.
+  catalogPromise ??= (async () => {
+    const res = await env.ASSETS.fetch(
+      new Request(new URL("/panneaux-catalog.json", origin)),
+    );
+    if (!res.ok) throw new Error(`catalog fetch failed: ${res.status}`);
+    const data = (await res.json()) as {
+      panneaux?: CatalogPanneau[];
+      categories?: CatalogCategory[];
+    };
+    return buildCatalog(data.panneaux ?? [], data.categories ?? []);
+  })().catch(() => {
+    catalogPromise = null;
+    return buildCatalog([], []);
+  });
+  return catalogPromise;
 }
 
 function collectCats(node: CatalogCategory, acc = new Set<string>()): Set<string> {
@@ -106,8 +110,8 @@ function panneauxInCategory(
   node: CatalogCategory,
   list: CatalogPanneau[],
 ): CatalogPanneau[] {
-  const leafCats = collectCats(node);
-  return list.filter((p) => p.category?.cat != null && leafCats.has(p.category.cat));
+  const cats = collectCats(node);
+  return list.filter((p) => p.category?.cat != null && cats.has(p.category.cat));
 }
 
 function escHtml(s: string): string {
@@ -116,6 +120,10 @@ function escHtml(s: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function listItemLink(href: string, label: string): string {
+  return `<li><a href="${escHtml(href)}">${escHtml(label)}</a></li>`;
 }
 
 function jsonLdScript(data: unknown): string {
@@ -183,9 +191,8 @@ function categoryTreeHtml(nodes: CatalogCategory[], origin: string): string {
   const items = nodes
     .map((n) => {
       const href = escHtml(`${origin}/categorie/${n.slug}`);
-      const label = `${escHtml(n.nameFr)}`;
       const kids = n.children?.length ? categoryTreeHtml(n.children, origin) : "";
-      return `<li><a href="${href}">${label}</a>${kids}</li>`;
+      return `<li><a href="${href}">${escHtml(n.nameFr)}</a>${kids}</li>`;
     })
     .join("");
   return `<ul>${items}</ul>`;
@@ -250,18 +257,17 @@ function botHtml(opts: {
 
 async function serveR2Image(
   env: Env,
-  key: string,
-  fallbackKeys: string[] = [],
+  keys: string[],
+  cacheControl = "public, max-age=86400",
 ): Promise<Response | null> {
   if (!env.IMAGES) return null;
-  const keys = [key, ...fallbackKeys];
   for (const k of keys) {
     const object = await env.IMAGES.get(k);
     if (!object) continue;
     const headers = new Headers();
     object.writeHttpMetadata(headers);
     headers.set("etag", object.httpEtag);
-    headers.set("cache-control", "public, max-age=86400");
+    headers.set("cache-control", cacheControl);
     if (!headers.has("content-type")) {
       headers.set("content-type", "image/png");
     }
@@ -270,9 +276,16 @@ async function serveR2Image(
   return null;
 }
 
-function defaultOg(origin: string): string {
-  return `${origin}/og.png`;
+/** decodeURIComponent that returns null on malformed input instead of throwing. */
+function safeDecode(s: string): string | null {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return null;
+  }
 }
+
+const notFound = (msg = "Not found") => new Response(msg, { status: 404 });
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -282,44 +295,33 @@ export default {
 
     // --- Raw panneau images from R2 ---
     if (pathname.startsWith(IMAGE_PREFIX) && env.IMAGES) {
-      const key = decodeURIComponent(pathname.slice(IMAGE_PREFIX.length));
-      if (!key || key.includes("..")) {
-        return new Response("Not found", { status: 404 });
-      }
-      const res = await serveR2Image(env, key, [`${key}.png`, `images/${key}`]);
-      return res ?? new Response("Image not found", { status: 404 });
+      const key = safeDecode(pathname.slice(IMAGE_PREFIX.length));
+      if (!key || key.includes("..")) return notFound();
+      const res = await serveR2Image(env, [key, `${key}.png`, `images/${key}`]);
+      return res ?? notFound("Image not found");
     }
 
     // --- Open Graph branded cards: /og/{cid}.png or /og/{cid} ---
     if (pathname.startsWith(OG_PREFIX) && env.IMAGES) {
-      const raw = decodeURIComponent(pathname.slice(OG_PREFIX.length)).replace(
-        /\.png$/i,
-        "",
-      );
-      if (!raw || raw.includes("..") || !/^\d+$/.test(raw)) {
-        return new Response("Not found", { status: 404 });
-      }
+      const cid = pathname.slice(OG_PREFIX.length).replace(/\.png$/i, "");
+      if (!/^\d+$/.test(cid)) return notFound();
       // Prefer pre-generated branded card; fall back to raw sign image
-      const res = await serveR2Image(env, `og/${raw}`, [raw, `${raw}.png`]);
-      if (res) {
-        const headers = new Headers(res.headers);
-        headers.set("cache-control", "public, max-age=604800");
-        return new Response(res.body, { status: res.status, headers });
-      }
-      return new Response("OG image not found", { status: 404 });
+      const res = await serveR2Image(
+        env,
+        [`og/${cid}`, cid, `${cid}.png`],
+        "public, max-age=604800",
+      );
+      return res ?? notFound("OG image not found");
     }
 
     // --- Search / social crawlers: crawlable HTML + OG tags ---
     if (BOT_UA.test(ua)) {
       const catalog = await loadCatalog(env, url.origin);
-      const og = defaultOg(url.origin);
+      const og = `${url.origin}/og.png`;
 
       if (pathname === "/" || pathname === "") {
         const links = catalog.categories
-          .map((c) => {
-            const href = escHtml(`${url.origin}/categorie/${c.slug}`);
-            return `<li><a href="${href}">${escHtml(c.nameFr)}</a></li>`;
-          })
+          .map((c) => listItemLink(`${url.origin}/categorie/${c.slug}`, c.nameFr))
           .join("");
         const body = `<nav>
   <p>Catégories :</p>
@@ -351,23 +353,21 @@ export default {
 
       const catMatch = pathname.match(/^\/categorie\/([^/]+)\/?$/);
       if (catMatch) {
-        const slug = decodeURIComponent(catMatch[1]!);
-        const node = findCategoryBySlug(slug, catalog.categories);
+        const slug = safeDecode(catMatch[1]!);
+        const node = slug ? catalog.categoryBySlug.get(slug) : undefined;
         if (node) {
           const items = panneauxInCategory(node, catalog.panneaux);
           const shown = items.slice(0, PANNEAU_LINK_CAP);
           const childLinks = (node.children ?? [])
-            .map((c) => {
-              const href = escHtml(`${url.origin}/categorie/${c.slug}`);
-              return `<li><a href="${href}">${escHtml(c.nameFr)}</a></li>`;
-            })
+            .map((c) => listItemLink(`${url.origin}/categorie/${c.slug}`, c.nameFr))
             .join("");
           const panneauLinks = shown
-            .map((p) => {
-              const href = escHtml(`${url.origin}/panneau/${codeToSlug(p.code)}`);
-              const label = escHtml(`${p.code} — ${p.nameFr}`);
-              return `<li><a href="${href}">${label}</a></li>`;
-            })
+            .map((p) =>
+              listItemLink(
+                `${url.origin}/panneau/${codeToSlug(p.code)}`,
+                `${p.code} — ${p.nameFr}`,
+              ),
+            )
             .join("");
           const truncated =
             items.length > PANNEAU_LINK_CAP
@@ -396,8 +396,8 @@ export default {
 
       const panneauMatch = pathname.match(/^\/panneau\/([^/]+)\/?$/);
       if (panneauMatch) {
-        const slug = decodeURIComponent(panneauMatch[1]!);
-        const p = findBySlug(catalog.panneaux, slug);
+        const slug = safeDecode(panneauMatch[1]!)?.toLowerCase();
+        const p = slug ? catalog.bySlug.get(slug) : undefined;
         if (p) {
           const title = `${p.code} — ${p.nameFr} · Panneaux QC`;
           const description = (
@@ -406,12 +406,8 @@ export default {
           ).slice(0, 300);
           const pageUrl = `${url.origin}/panneau/${codeToSlug(p.code)}`;
           const image = `${url.origin}/og/${p.cid}.png`;
-          const topLabel = p.category?.pathFr?.[0];
-          const topCat = topLabel
-            ? catalog.categories.find(
-                (c) => c.nameFr === topLabel || c.slug === topLabel.toLowerCase(),
-              )
-            : undefined;
+          const topCode = p.category?.che?.split("-")[0];
+          const topCat = catalog.categories.find((c) => c.cat === topCode);
           const crumbs = [
             `<a href="${escHtml(`${url.origin}/`)}">Accueil</a>`,
             topCat

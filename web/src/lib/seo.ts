@@ -22,6 +22,12 @@ export type SeoInput = {
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 };
 
+/** Prefixes a site-relative path with SITE_URL; absolute URLs pass through. */
+function absoluteUrl(pathOrUrl: string): string {
+  if (/^https?:/i.test(pathOrUrl)) return pathOrUrl;
+  return `${SITE_URL}${pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`}`;
+}
+
 function setMeta(attr: "name" | "property", key: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(
     `meta[${attr}="${key}"]`,
@@ -75,12 +81,8 @@ export function applySeo({
 
   document.title = fullTitle;
 
-  const url = `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
-  const ogImage = image?.startsWith("http")
-    ? image
-    : image
-      ? `${SITE_URL}${image.startsWith("/") ? image : `/${image}`}`
-      : `${SITE_URL}/og.png`;
+  const url = absoluteUrl(path);
+  const ogImage = absoluteUrl(image ?? "/og.png");
 
   setMeta("name", "description", description);
   setMeta("name", "robots", noindex ? "noindex, nofollow" : "index, follow");
@@ -143,26 +145,17 @@ export function panneauJsonLd(p: {
     description:
       p.descriptionFr ||
       `Panneau de signalisation routière ${p.code} (${p.nameFr}) au Québec.`,
-    contentUrl: p.image,
+    contentUrl: p.image ? absoluteUrl(p.image) : undefined,
     url: `${SITE_URL}${p.path}`,
     inLanguage: "fr-CA",
     keywords: [p.code, p.nameFr, ...p.categoryPath, "signalisation", "Québec"].join(
       ", ",
     ),
-    thumbnailUrl: p.image?.startsWith("http")
-      ? p.image
-      : p.image
-        ? `${SITE_URL}${p.image.startsWith("/") ? p.image : `/${p.image}`}`
-        : undefined,
+    thumbnailUrl: p.image ? absoluteUrl(p.image) : undefined,
     isPartOf: {
       "@type": "WebSite",
       name: SITE_NAME,
       url: SITE_URL,
     },
   };
-}
-
-/** Absolute OG card URL for a panneau cid. */
-export function absoluteOgUrl(cid: number): string {
-  return `${SITE_URL}/og/${cid}.png`;
 }

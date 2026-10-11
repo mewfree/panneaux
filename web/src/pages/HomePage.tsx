@@ -6,15 +6,18 @@ import { SearchBox } from "../components/SearchBox";
 import { Seo } from "../components/Seo";
 import { catalog, countForCategory, topCategories } from "../lib/catalog";
 import { searchPanneaux } from "../lib/search";
+import { panneauxCount } from "../lib/format";
 import { DEFAULT_DESCRIPTION, websiteJsonLd } from "../lib/seo";
 import { newShuffleSeed, shuffle } from "../lib/shuffle";
 
 const PAGE_SIZE = 48;
 const PREFIXES = ["P-", "D-", "T-", "I-", "Rte-", "Auto-"];
+const WEBSITE_JSON_LD = websiteJsonLd();
 
 export function HomePage() {
   const [params, setParams] = useSearchParams();
   const q = params.get("q") ?? "";
+  const trimmedQ = q.trim();
   const catFilter = params.get("cat") ?? "";
   const prefix = params.get("prefix") ?? "";
   const randomOn = params.get("random") === "1";
@@ -76,10 +79,7 @@ export function HomePage() {
     setParams(p, { replace: true });
   }
 
-  function enableRandom() {
-    update({ random: "1", seed: String(newShuffleSeed()) });
-  }
-
+  /** Enables random order, or picks a new seed when already on. */
   function reshuffle() {
     update({ random: "1", seed: String(newShuffleSeed()) });
   }
@@ -88,15 +88,15 @@ export function HomePage() {
     update({ random: null, seed: null });
   }
 
-  const filtering = Boolean(q.trim() || catFilter || prefix || randomOn);
+  const filtering = Boolean(trimmedQ || catFilter || prefix || randomOn);
 
-  const seoTitle = q.trim()
-    ? `Recherche « ${q.trim()} » — panneaux du Québec`
+  const seoTitle = trimmedQ
+    ? `Recherche « ${trimmedQ} » — panneaux du Québec`
     : catFilter
       ? `Panneaux · ${topCategories.find((c) => c.cat === catFilter)?.nameFr ?? catFilter}`
       : undefined;
-  const seoDesc = q.trim()
-    ? `${results.length} panneau(x) pour « ${q.trim()} » dans le répertoire de signalisation routière du Québec.`
+  const seoDesc = trimmedQ
+    ? `${results.length} panneau(x) pour « ${trimmedQ} » dans le répertoire de signalisation routière du Québec.`
     : DEFAULT_DESCRIPTION;
 
   return (
@@ -104,12 +104,8 @@ export function HomePage() {
       <Seo
         title={seoTitle}
         description={seoDesc}
-        path={
-          q || catFilter || prefix || randomOn
-            ? `/?${params.toString()}`
-            : "/"
-        }
-        jsonLd={websiteJsonLd()}
+        path={q || catFilter || prefix || randomOn ? `/?${params.toString()}` : "/"}
+        jsonLd={WEBSITE_JSON_LD}
       />
       <header className="space-y-4">
         <div className="space-y-1">
@@ -162,7 +158,7 @@ export function HomePage() {
           <span className="mx-1 hidden h-4 w-px bg-slate-200 sm:inline" aria-hidden />
           <FilterChip
             active={randomOn}
-            onClick={() => (randomOn ? disableRandom() : enableRandom())}
+            onClick={() => (randomOn ? disableRandom() : reshuffle())}
             label="Aléatoire"
           />
           {randomOn && (
@@ -191,15 +187,14 @@ export function HomePage() {
 
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm text-slate-500">
-          {results.length.toLocaleString("fr-CA")} panneau
-          {results.length === 1 ? "" : "x"}
+          {panneauxCount(results.length)}
           {randomOn ? (
             <span className="text-slate-400"> · ordre aléatoire</span>
           ) : null}
-          {q.trim() ? (
+          {trimmedQ ? (
             <>
               {" "}
-              pour « <span className="font-medium text-slate-700">{q.trim()}</span> »
+              pour « <span className="font-medium text-slate-700">{trimmedQ}</span> »
             </>
           ) : null}
           {shown.length < results.length ? (

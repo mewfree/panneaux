@@ -100,7 +100,7 @@ async function main() {
   const byTop: Record<string, number> = {};
   for (const p of panneaux) {
     const t = p.category.pathFr[0] ?? "?";
-    byTop[t] = (byTop[t] || 0) + 1;
+    byTop[t] = (byTop[t] ?? 0) + 1;
   }
 
   console.log(`Rebuilt ${catalog.count} panneaux → ${out}`);

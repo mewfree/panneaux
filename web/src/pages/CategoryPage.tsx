@@ -3,9 +3,10 @@ import { PanneauGrid } from "../components/PanneauGrid";
 import { Seo } from "../components/Seo";
 import {
   findCategoryBySlug,
+  findParentCategory,
   panneauxInCategory,
-  topCategories,
 } from "../lib/catalog";
+import { panneauxCount } from "../lib/format";
 
 export function CategoryPage() {
   const { slug = "" } = useParams();
@@ -24,7 +25,7 @@ export function CategoryPage() {
   }
 
   const items = panneauxInCategory(node);
-  const parent = findParent(node.slug);
+  const parent = findParentCategory(node);
   const desc =
     node.descriptionFr ||
     `Panneaux de signalisation « ${node.nameFr} » au Québec (${items.length} dispositifs).`;
@@ -55,9 +56,7 @@ export function CategoryPage() {
       <div className="space-y-2">
         <h1 className="text-2xl font-bold tracking-tight">{node.nameFr}</h1>
         {node.descriptionFr && <p className="text-slate-600">{node.descriptionFr}</p>}
-        <p className="text-sm text-slate-500">
-          {items.length} panneau{items.length === 1 ? "" : "x"}
-        </p>
+        <p className="text-sm text-slate-500">{panneauxCount(items.length)}</p>
       </div>
 
       {node.children.length > 0 && (
@@ -80,30 +79,4 @@ export function CategoryPage() {
       />
     </div>
   );
-}
-
-function findParent(slug: string) {
-  for (const top of topCategories) {
-    if (top.children.some((c) => c.slug === slug || findIn(c, slug))) {
-      // Prefer immediate parent
-      const walk = (node: typeof top): typeof top | null => {
-        for (const child of node.children) {
-          if (child.slug === slug) return node;
-          const deeper = walk(child);
-          if (deeper) return deeper;
-        }
-        return null;
-      };
-      return walk(top);
-    }
-  }
-  return null;
-}
-
-function findIn(
-  node: (typeof topCategories)[0],
-  slug: string,
-): boolean {
-  if (node.slug === slug) return true;
-  return node.children.some((c) => findIn(c, slug));
 }

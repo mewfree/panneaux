@@ -6,11 +6,4 @@ export type {
   PanneauCategory,
 } from "../../../data/types";
 
-export {
-  codeToSlug,
-  devisUrl,
-  officialCategoryUrl,
-  officialDetailUrl,
-  officialImageUrl,
-  RSR_HOME,
-} from "../../../data/types";
+export { codeToSlug, devisUrl, officialImageUrl } from "../../../data/types";

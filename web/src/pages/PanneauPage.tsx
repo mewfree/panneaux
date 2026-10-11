@@ -7,7 +7,7 @@ import {
   officialImageFallback,
   ogImageUrl,
   panneauPath,
-  topCategories,
+  topCategoryOf,
 } from "../lib/catalog";
 import { panneauJsonLd } from "../lib/seo";
 import { devisUrl } from "../lib/types";
@@ -28,10 +28,15 @@ export function PanneauPage() {
     );
   }
 
-  const topSlug =
-    topCategories.find(
-      (c) => c.cat === p.category.cat || p.category.che.startsWith(c.cat),
-    )?.slug ?? topCategories[0]?.slug;
+  const topSlug = topCategoryOf(p)?.slug;
+  const facts: { label: string; value: string | number; mono?: boolean }[] = [
+    { label: "Identifiant RSR", value: p.cid, mono: true },
+    { label: "Devis technique", value: p.hasDevis ? "Disponible" : "Non disponible" },
+    ...(p.usage ? [{ label: "Usage", value: p.usage }] : []),
+    ...(p.couleur ? [{ label: "Couleur", value: p.couleur }] : []),
+    ...(p.pellicule ? [{ label: "Pellicule", value: p.pellicule }] : []),
+    ...(p.tomeV ? [{ label: "Tome V", value: p.tomeV, mono: true }] : []),
+  ];
 
   const path = panneauPath(p);
   const og = ogImageUrl(p);
@@ -103,38 +108,14 @@ export function PanneauPage() {
           )}
 
           <dl className="grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-xl bg-slate-50 p-3">
-              <dt className="text-xs text-slate-500">Identifiant RSR</dt>
-              <dd className="font-mono font-medium">{p.cid}</dd>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-3">
-              <dt className="text-xs text-slate-500">Devis technique</dt>
-              <dd className="font-medium">{p.hasDevis ? "Disponible" : "Non disponible"}</dd>
-            </div>
-            {p.usage && (
-              <div className="rounded-xl bg-slate-50 p-3">
-                <dt className="text-xs text-slate-500">Usage</dt>
-                <dd className="font-medium">{p.usage}</dd>
+            {facts.map((f) => (
+              <div key={f.label} className="rounded-xl bg-slate-50 p-3">
+                <dt className="text-xs text-slate-500">{f.label}</dt>
+                <dd className={f.mono ? "font-mono font-medium" : "font-medium"}>
+                  {f.value}
+                </dd>
               </div>
-            )}
-            {p.couleur && (
-              <div className="rounded-xl bg-slate-50 p-3">
-                <dt className="text-xs text-slate-500">Couleur</dt>
-                <dd className="font-medium">{p.couleur}</dd>
-              </div>
-            )}
-            {p.pellicule && (
-              <div className="rounded-xl bg-slate-50 p-3">
-                <dt className="text-xs text-slate-500">Pellicule</dt>
-                <dd className="font-medium">{p.pellicule}</dd>
-              </div>
-            )}
-            {p.tomeV && (
-              <div className="rounded-xl bg-slate-50 p-3">
-                <dt className="text-xs text-slate-500">Tome V</dt>
-                <dd className="font-mono font-medium">{p.tomeV}</dd>
-              </div>
-            )}
+            ))}
           </dl>
 
           {p.hasDevis && (

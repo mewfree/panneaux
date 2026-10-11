@@ -2,8 +2,6 @@ import MiniSearch from "minisearch";
 import { panneaux } from "./catalog";
 import type { Panneau } from "./types";
 
-export type SearchHit = Panneau & { score?: number };
-
 const mini = new MiniSearch<Panneau>({
   fields: ["code", "nameFr", "nameEn", "descriptionFr", "pathText", "cat", "usage", "couleur"],
   storeFields: ["cid"],
@@ -36,37 +34,29 @@ export function searchPanneaux(
   query: string,
   filters: SearchFilters = {},
   limit = 50,
-): SearchHit[] {
+): Panneau[] {
   const q = query.trim();
-  let results: SearchHit[];
+  const cats = filters.cats?.length ? new Set(filters.cats) : null;
+  const prefix = filters.codePrefix?.toUpperCase();
 
-  if (!q) {
-    results = [...panneaux];
-  } else {
-    const hits = mini.search(q);
-    const mapped: SearchHit[] = [];
-    for (const h of hits) {
-      const p = byCid.get(Number(h.id));
-      if (p) mapped.push({ ...p, score: h.score });
-    }
-    results = mapped;
+  const matches = (p: Panneau) =>
+    (!cats || cats.has(p.category.cat) || cats.has(p.category.che.split("-")[0] ?? "")) &&
+    (!filters.hasDevis || p.hasDevis) &&
+    (!prefix || p.code.toUpperCase().startsWith(prefix));
+
+  // MiniSearch results are already ranked; no query keeps catalog order.
+  const candidates: Iterable<Panneau> = q
+    ? mini
+        .search(q)
+        .map((h) => byCid.get(h.id as number))
+        .filter((p): p is Panneau => p != null)
+    : panneaux;
+
+  const out: Panneau[] = [];
+  for (const p of candidates) {
+    if (!matches(p)) continue;
+    out.push(p);
+    if (out.length >= limit) break;
   }
-
-  if (filters.cats?.length) {
-    const set = new Set(filters.cats);
-    results = results.filter(
-      (p) => set.has(p.category.cat) || set.has(p.category.che.split("-")[0] ?? ""),
-    );
-  }
-
-  if (filters.hasDevis === true) {
-    results = results.filter((p) => p.hasDevis);
-  }
-
-  if (filters.codePrefix) {
-    const prefix = filters.codePrefix.toUpperCase();
-    results = results.filter((p) => p.code.toUpperCase().startsWith(prefix));
-  }
-
-  return results.slice(0, limit);
+  return out;
 }

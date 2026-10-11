@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { imageUrl, officialImageFallback, panneauPath } from "../lib/catalog";
 import type { Panneau } from "../lib/types";
@@ -7,7 +8,7 @@ type Props = {
   panneau: Panneau;
 };
 
-export function PanneauCard({ panneau }: Props) {
+export const PanneauCard = memo(function PanneauCard({ panneau }: Props) {
   return (
     <Link
       to={panneauPath(panneau)}
@@ -34,4 +35,4 @@ export function PanneauCard({ panneau }: Props) {
       </div>
     </Link>
   );
-}
+});

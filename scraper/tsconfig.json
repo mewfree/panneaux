@@ -8,8 +8,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "types": ["node"],
-    "outDir": "dist",
-    "rootDir": "src"
+    "noEmit": true
   },
-  "include": ["src"]
+  "include": ["src", "../data/types.ts"]
 }

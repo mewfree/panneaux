@@ -1,57 +1,68 @@
 import categoriesData from "../../../data/categories.json";
 import catalogData from "../../../data/panneaux.json";
 import type { CatalogFile, CategoriesFile, CategoryNode, Panneau } from "./types";
-import { codeToSlug } from "./types";
+import { codeToSlug, officialImageUrl } from "./types";
 
 export const catalog = catalogData as CatalogFile;
-export const categoriesFile = categoriesData as CategoriesFile;
 export const panneaux: Panneau[] = catalog.panneaux;
-export const topCategories: CategoryNode[] = categoriesFile.categories;
+export const topCategories: CategoryNode[] = (categoriesData as CategoriesFile).categories;
 
 const byCode = new Map<string, Panneau>();
-const byCid = new Map<number, Panneau>();
 const bySlug = new Map<string, Panneau>();
 
 for (const p of panneaux) {
   byCode.set(p.code.toLowerCase(), p);
-  byCid.set(p.cid, p);
   bySlug.set(codeToSlug(p.code), p);
 }
 
-export function getByCode(code: string): Panneau | undefined {
-  return byCode.get(code.toLowerCase());
-}
-
 export function getBySlug(slug: string): Panneau | undefined {
-  return bySlug.get(slug.toLowerCase()) ?? getByCode(slug);
+  const key = slug.toLowerCase();
+  return bySlug.get(key) ?? byCode.get(key);
 }
 
-export function getByCid(cid: number): Panneau | undefined {
-  return byCid.get(cid);
+// --- Category index (built once; every lookup below is O(1)) ---
+
+const nodeBySlug = new Map<string, CategoryNode>();
+const parentBySlug = new Map<string, CategoryNode>();
+const panneauxByCat = new Map<string, Panneau[]>();
+const itemsBySlug = new Map<string, Panneau[]>();
+
+for (const p of panneaux) {
+  const list = panneauxByCat.get(p.category.cat);
+  if (list) list.push(p);
+  else panneauxByCat.set(p.category.cat, [p]);
 }
 
-export function findCategoryBySlug(
-  slug: string,
-  nodes: CategoryNode[] = topCategories,
-): CategoryNode | undefined {
-  for (const node of nodes) {
-    if (node.slug === slug) return node;
-    const child = findCategoryBySlug(slug, node.children);
-    if (child) return child;
-  }
-  return undefined;
+/** Indexes `node` and returns every panneau in its subtree. */
+function indexNode(node: CategoryNode, parent?: CategoryNode): Panneau[] {
+  nodeBySlug.set(node.slug, node);
+  if (parent) parentBySlug.set(node.slug, parent);
+  const items = [...(panneauxByCat.get(node.cat) ?? [])];
+  for (const child of node.children) items.push(...indexNode(child, node));
+  itemsBySlug.set(node.slug, items);
+  return items;
 }
 
-/** Match panneau against a category node (leaf cat or any descendant che prefix). */
+for (const top of topCategories) indexNode(top);
+
+export function findCategoryBySlug(slug: string): CategoryNode | undefined {
+  return nodeBySlug.get(slug);
+}
+
+/** Immediate parent of a category, or undefined for top-level categories. */
+export function findParentCategory(node: CategoryNode): CategoryNode | undefined {
+  return parentBySlug.get(node.slug);
+}
+
+/** Top-level category a panneau belongs to (first segment of its `che` path). */
+export function topCategoryOf(p: Panneau): CategoryNode | undefined {
+  const top = p.category.che.split("-")[0];
+  return topCategories.find((c) => c.cat === top);
+}
+
+/** Panneaux of a category and all its descendants. */
 export function panneauxInCategory(node: CategoryNode): Panneau[] {
-  const leafCats = collectCats(node);
-  return panneaux.filter((p) => leafCats.has(p.category.cat));
-}
-
-function collectCats(node: CategoryNode, acc = new Set<string>()): Set<string> {
-  acc.add(node.cat);
-  for (const child of node.children) collectCats(child, acc);
-  return acc;
+  return itemsBySlug.get(node.slug) ?? [];
 }
 
 export function countForCategory(node: CategoryNode): number {
@@ -62,13 +73,8 @@ export function panneauPath(p: Panneau): string {
   return `/panneau/${codeToSlug(p.code)}`;
 }
 
-/**
- * Image URL: prefer local/R2 proxy when available; fall back to official RSR.
- * In production with R2, worker serves /img/{imageKey}.
- */
+/** Worker/R2 proxy path (/img/{imageKey}); the UI falls back to the official image, then a placeholder. */
 export function imageUrl(p: Panneau): string {
-  // Prefer Worker/R2 proxy path (works once images are uploaded).
-  // Until then, browser may still 404 — UI shows placeholder.
   return `/img/${p.imageKey}`;
 }
 
@@ -78,5 +84,5 @@ export function ogImageUrl(p: Panneau): string {
 }
 
 export function officialImageFallback(p: Panneau): string {
-  return `https://www.rsr.transports.gouv.qc.ca/Gestionnaires/ObtenirImage.ashx?imgId=${p.cid}`;
+  return officialImageUrl(p.cid);
 }

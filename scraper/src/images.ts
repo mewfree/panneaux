@@ -2,22 +2,21 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { Page, Response } from "playwright";
 import { IMAGES_DIR } from "./config.js";
-import { imageUrl } from "./parse.js";
+import { errorMessage } from "./util.js";
+import { officialImageUrl } from "../../data/types.js";
 
 export async function ensureImagesDir() {
   await fs.mkdir(IMAGES_DIR, { recursive: true });
 }
 
 export async function imageAlreadyOnDisk(cid: number): Promise<boolean> {
-  for (const ext of ["png", "jpg", "gif", "webp"]) {
-    try {
-      await fs.access(path.join(IMAGES_DIR, `${cid}.${ext}`));
-      return true;
-    } catch {
-      /* continue */
-    }
-  }
-  return false;
+  const exists = (ext: string) =>
+    fs.access(path.join(IMAGES_DIR, `${cid}.${ext}`)).then(
+      () => true,
+      () => false,
+    );
+  const found = await Promise.all(["png", "jpg", "gif", "webp"].map(exists));
+  return found.some(Boolean);
 }
 
 function sniffExt(buf: Buffer, contentType?: string | null): string {
@@ -69,7 +68,7 @@ export async function saveFromResponse(
     await writeImage(cid, buf, res.headers()["content-type"]);
     return { ok: true };
   } catch (err) {
-    return { ok: false, reason: err instanceof Error ? err.message : String(err) };
+    return { ok: false, reason: errorMessage(err) };
   }
 }
 
@@ -99,7 +98,7 @@ export async function downloadImage(
 
   // 2) in-page fetch of absolute image URL
   try {
-    const url = imageUrl(cid);
+    const url = officialImageUrl(cid);
     const result = await page.evaluate(async (imageHref: string) => {
       try {
         const res = await fetch(imageHref, {
@@ -183,7 +182,7 @@ export async function downloadImage(
 
   // 5) APIRequestContext (often CF 403)
   try {
-    const res = await page.request.get(imageUrl(cid), {
+    const res = await page.request.get(officialImageUrl(cid), {
       headers: {
         Referer: "https://www.rsr.transports.gouv.qc.ca/Dispositifs/Panneaux.aspx",
         Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
@@ -196,9 +195,6 @@ export async function downloadImage(
     await writeImage(cid, buf, res.headers()["content-type"]);
     return { ok: true, method: "request" };
   } catch (err) {
-    return {
-      ok: false,
-      reason: err instanceof Error ? err.message : String(err),
-    };
+    return { ok: false, reason: errorMessage(err) };
   }
 }

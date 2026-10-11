@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Seo } from "../components/Seo";
 import { countForCategory, topCategories } from "../lib/catalog";
+import { panneauxCount } from "../lib/format";
 import type { CategoryNode } from "../lib/types";
 
 export function CategoriesPage() {
@@ -45,7 +46,7 @@ function CategoryBlock({ node, depth }: { node: CategoryNode; depth: number }) {
         <p className="mt-1 text-sm text-slate-600">{node.descriptionFr}</p>
       )}
       <p className="mt-1 text-xs text-slate-500">
-        {count} panneau{count === 1 ? "" : "x"} dans l’échantillon
+        {panneauxCount(count)} dans l’échantillon
       </p>
       {node.children.length > 0 && (
         <div className="mt-3 space-y-3">

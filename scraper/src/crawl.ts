@@ -10,6 +10,7 @@ import {
   PANNEAUX_URL,
 } from "./config.js";
 import { downloadImage, ensureImagesDir, watchImageResponse } from "./images.js";
+import { errorMessage, sleep } from "./util.js";
 import {
   categoryListUrl,
   detailUrl,
@@ -31,8 +32,23 @@ export type CrawlOptions = {
   imagesOnly?: boolean;
 };
 
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
+/** Counts a download result on the report; only the first 20 failures are listed. */
+function recordImageResult(
+  report: ScrapeReport,
+  cid: number,
+  result: Awaited<ReturnType<typeof downloadImage>>,
+) {
+  if (result.ok) {
+    report.imagesDownloaded += 1;
+    return;
+  }
+  report.imageFailures += 1;
+  if (report.imageFailures <= 20) {
+    report.errors.push({
+      where: `image:${cid}`,
+      message: `${result.reason ?? "download failed"}${result.method ? ` [${result.method}]` : ""}`,
+    });
+  }
 }
 
 async function ensureDirs() {
@@ -170,7 +186,7 @@ async function collectAllListItems(
     } catch (err) {
       report.errors.push({
         where: `list:${seed.cat}:next`,
-        message: err instanceof Error ? err.message : String(err),
+        message: errorMessage(err),
       });
       break;
     }
@@ -241,12 +257,12 @@ export async function runCrawl(opts: CrawlOptions = {}): Promise<{
     } catch (err) {
       report.errors.push({
         where: "warmup",
-        message: err instanceof Error ? err.message : String(err),
+        message: errorMessage(err),
       });
       throw new Error(
         `Impossible d'accéder au RSR (Cloudflare ou réseau). ` +
           `Relancez avec --headed pour résoudre le défi manuellement. ` +
-          `Détail: ${err instanceof Error ? err.message : err}`,
+          `Détail: ${errorMessage(err)}`,
       );
     }
 
@@ -264,25 +280,12 @@ export async function runCrawl(opts: CrawlOptions = {}): Promise<{
           await sleep(Math.min(delayMs, 400));
           const netRes = await imgWatch;
           const result = await downloadImage(page, p.cid, { networkResponse: netRes });
-          if (result.ok) {
-            report.imagesDownloaded += 1;
-            if (result.method && report.imagesDownloaded <= 5) {
-              console.log(`  image ${p.cid} via ${result.method}`);
-            }
-          } else {
-            report.imageFailures += 1;
-            if (report.imageFailures <= 20) {
-              report.errors.push({
-                where: `image:${p.cid}`,
-                message: result.reason ?? "download failed",
-              });
-            }
-          }
+          recordImageResult(report, p.cid, result);
         } catch (err) {
           report.imageFailures += 1;
           report.errors.push({
             where: `image:${p.cid}`,
-            message: err instanceof Error ? err.message : String(err),
+            message: errorMessage(err),
           });
         }
         if ((idx + 1) % 50 === 0 || idx === existing.panneaux.length - 1) {
@@ -296,7 +299,7 @@ export async function runCrawl(opts: CrawlOptions = {}): Promise<{
       return { catalog: existing, report };
     }
 
-    const listed: ScrapedListItem[] = [];
+    const unique = new Map<number, ScrapedListItem>();
     const seeds = sample ? CATEGORY_SEEDS.slice(0, sampleCategories) : CATEGORY_SEEDS;
 
     for (const seed of seeds) {
@@ -304,18 +307,16 @@ export async function runCrawl(opts: CrawlOptions = {}): Promise<{
       console.log(`Catégorie ${seed.cat} (${seed.pathFr.join(" > ")})…`);
       try {
         const items = await collectAllListItems(page, seed, delayMs, report);
-        for (const item of items) listed.push(item);
-        if (sample && listed.length >= sampleItems) break;
+        for (const item of items) unique.set(item.cid, item);
+        if (sample && unique.size >= sampleItems) break;
       } catch (err) {
         report.errors.push({
           where: `list:${seed.cat}`,
-          message: err instanceof Error ? err.message : String(err),
+          message: errorMessage(err),
         });
       }
     }
 
-    const unique = new Map<number, ScrapedListItem>();
-    for (const item of listed) unique.set(item.cid, item);
     let items = [...unique.values()];
     if (sample) items = items.slice(0, sampleItems);
     report.itemsListed = items.length;
@@ -357,7 +358,7 @@ export async function runCrawl(opts: CrawlOptions = {}): Promise<{
         } catch (err) {
           report.errors.push({
             where: `detail:${item.cid}`,
-            message: err instanceof Error ? err.message : String(err),
+            message: errorMessage(err),
           });
         }
       }
@@ -372,22 +373,12 @@ export async function runCrawl(opts: CrawlOptions = {}): Promise<{
             networkResponse = await imgWatch;
           }
           const result = await downloadImage(page, item.cid, { networkResponse });
-          if (result.ok) {
-            report.imagesDownloaded += 1;
-          } else {
-            report.imageFailures += 1;
-            if (report.imageFailures <= 20) {
-              report.errors.push({
-                where: `image:${item.cid}`,
-                message: `${result.reason ?? "download failed"}${result.method ? ` [${result.method}]` : ""}`,
-              });
-            }
-          }
+          recordImageResult(report, item.cid, result);
         } catch (err) {
           report.imageFailures += 1;
           report.errors.push({
             where: `image:${item.cid}`,
-            message: err instanceof Error ? err.message : String(err),
+            message: errorMessage(err),
           });
         }
       }
